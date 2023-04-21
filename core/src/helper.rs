@@ -29,8 +29,8 @@ pub async fn mkdir<P: AsRef<std::path::Path>>(path: P) {
 }
 
 /// Remove the cache folder
-pub(crate) async fn rm_cache<P: AsRef<std::path::Path>>(cache_path: P) {
-    fs::remove_dir_all(cache_path).await.unwrap();
+pub(crate) fn rm_cache<P: AsRef<std::path::Path>>(cache_path: P) {
+    std::fs::remove_dir_all(cache_path).unwrap();
 }
 
 /// Merge video and audio using this command:

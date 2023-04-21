@@ -1,23 +1,20 @@
 //! Downloader
 //! Create a thread and spawn tasks through `run` on it, then run them asynchronously
 
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tokio::sync::mpsc;
 
 use crate::helper;
-use crate::task::{Message, Task};
-
-type TasksMap = Mutex<RefCell<HashMap<usize, Arc<Task>>>>;
+use crate::message::Message;
+use crate::task::Task;
 
 #[derive(Debug)]
 pub struct Downloader {
     id_next: AtomicUsize,
-    tx: mpsc::Sender<Message>,
     rt: tokio::runtime::Runtime,
-    tasks: TasksMap,
+    tx: mpsc::Sender<Message>,
 }
 
 impl Downloader {
@@ -32,16 +29,34 @@ impl Downloader {
         std::thread::spawn(move || {
             let rt = helper::create_rt();
             rt.block_on(async move {
-                while let Some(Message::Job(task)) = rx.recv().await {
-                    // dbg!(task.as_ref());
-                    tokio::spawn(async move {
-                        match task.execute().await {
-                            Ok(_) => println!("All Finished"),
-                            Err(e) => {
-                                dbg!(e);
-                            }
+                let mut tasks = HashMap::new();
+                let mut jhs = HashMap::new();
+                while let Some(msg) = rx.recv().await {
+                    match msg {
+                        // spawn a download
+                        Message::Job(task) => {
+                            tasks.insert(task.id, task.clone());
+                            let task_c = task.clone();
+                            let jh = tokio::spawn(async move { task_c.execute().await });
+                            jhs.insert(task.id, jh);
                         }
-                    });
+                        // query the process
+                        Message::Process((tx, id)) => {
+                            let state = tasks.get(&id).unwrap().state();
+                            tx.send(state).unwrap();
+                        }
+                        // cancel a download
+                        Message::Cancel(id) => {
+                            jhs.remove(&id).unwrap().abort();
+                            tasks.remove(&id).unwrap().rm_cache();
+                        }
+                        Message::Terminate => {
+                            for task in tasks.values() {
+                                task.rm_cache();
+                            }
+                            break;
+                        }
+                    }
                 }
             });
             println!("Terminated");
@@ -51,7 +66,6 @@ impl Downloader {
             id_next: AtomicUsize::new(0),
             tx,
             rt,
-            tasks: Mutex::new(RefCell::new(HashMap::new())),
         }
     }
 
@@ -69,27 +83,31 @@ impl Downloader {
     /// ```
     pub fn run(&self, target: String, save_dir: String) -> usize {
         let id = self.id_next.fetch_add(1, Ordering::SeqCst);
-        let tsk = Arc::new(Task::new(id, target, save_dir));
-        self.rt
-            .block_on(self.tx.send(Message::Job(tsk.clone())))
-            .unwrap();
-
-        self.tasks.lock().unwrap().borrow_mut().insert(id, tsk);
+        let task = Arc::new(Task::new(id, target, save_dir));
+        self.rt.block_on(self.tx.send(Message::Job(task))).unwrap();
         id
     }
 
     /// Helper function to display progress
     /// todo
     pub fn state(&self, id: usize) -> String {
-        println!("....");
-        self.tasks.lock().unwrap().borrow()[&id].state()
+        let (tx, rx) = tokio::sync::oneshot::channel::<String>();
+        self.rt.block_on(async {
+            self.tx.send(Message::Process((tx, id))).await.unwrap();
+            rx.await.unwrap()
+        })
     }
 
     /// Terminate the Downloader
     /// # Attention
     /// This will interrupt the downloading and leave the cached files undeleted.
-    pub fn terminate(&self, id: usize) {
-        self.rt.block_on(self.tx.send(Message::Terminate)).unwrap();
+    pub fn cancel(&self, id: usize) {
+        self.rt.block_on(self.tx.send(Message::Cancel(id))).unwrap();
+    }
+
+    pub fn terminate(&self) {
+        let tx_clone = self.tx.clone();
+        self.rt.block_on(tx_clone.send(Message::Terminate)).unwrap();
     }
 }
 
@@ -98,8 +116,7 @@ impl Drop for Downloader {
         if self.tx.is_closed() {
             return;
         }
-        let tx_clone = self.tx.clone();
-        self.rt.block_on(tx_clone.send(Message::Terminate)).unwrap();
+        self.terminate();
         println!("Terminating")
     }
 }

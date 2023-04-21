@@ -32,4 +32,8 @@ impl Process {
     pub fn finished(&self) -> usize {
         self.finished.load(Ordering::SeqCst)
     }
+
+    pub fn state(&self) -> String {
+        format!("{}/{}", self.finished(), self.total())
+    }
 }

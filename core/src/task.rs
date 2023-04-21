@@ -1,7 +1,6 @@
 use reqwest::{header, Client};
 use std::convert::TryInto;
 use std::io::SeekFrom;
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 
@@ -10,12 +9,6 @@ use crate::helper;
 use crate::process::Process;
 
 type TaskResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
-
-#[derive(Debug)]
-pub(crate) enum Message {
-    Job(Arc<Task>),
-    Terminate,
-}
 
 #[derive(Debug)]
 pub struct Task {
@@ -40,22 +33,15 @@ impl Task {
         // todo use tokio::sync::Semaphore;
         let (v_url, a_url, title) = self.parse().await?;
         dbg!(&v_url, &a_url, &title);
-        helper::mkdir(format!("{}/cache_{title}/", self.save_dir)).await;
-        let cache_path = |f| format!("{}/cache_{title}/{title}.{f}", self.save_dir);
+        helper::mkdir(format!("{}/cache_{}/", self.save_dir, self.id)).await;
+        let cache_path = |f| format!("{}/cache_{}/{title}.{f}", self.save_dir, self.id);
         let v_path = cache_path(VIDEO_FORMAT);
         let a_path = cache_path(AUDIO_FORMAT);
-        self.download(v_url, v_path.clone()).await?;
-        self.download(a_url, a_path.clone()).await?;
-        // loop {
-        //     // println!("{} process: {}", self.id, self.state());
-        //     if self.process.finished() == self.process.total() && self.process.total() != 0 {
-        //         break;
-        //     }
-        //     tokio::task::yield_now().await;
-        // }
+        let target_path = vec![(v_url, v_path.clone()), (a_url, a_path.clone())];
+        self.download(target_path).await?;
         let out_path = format!("{}/{title}.{VIDEO_FORMAT}", self.save_dir);
         helper::merge(v_path, a_path, out_path).await.unwrap();
-        helper::rm_cache(format!("{}/cache_{title}/", self.save_dir)).await;
+        self.rm_cache();
         Ok(())
     }
 
@@ -89,27 +75,29 @@ impl Task {
     /// # Args
     /// `target`: A direct download url
     /// `path`: Ends with `VIDEO/AUDIO_FORMAT'
-    async fn download(&self, target: String, path: String) -> TaskResult<()> {
-        let total = Self::get_content_length(target.as_str()).await?;
-        self.process.add_total(total);
+    async fn download(&self, target_path: Vec<(String, String)>) -> TaskResult<()> {
         let mut handles = Vec::new();
-        let quotient = total / PARTS;
-        for i in 0..PARTS {
-            let range = format!(
-                "{}-{}",
-                quotient * i,
-                if i != (PARTS - 1) {
-                    quotient * (i + 1) - 1
-                } else {
-                    total - 1
-                }
-            );
-            handles.push(tokio::spawn(Self::download_range(
-                target.to_owned(),
-                range,
-                path.to_owned(),
-                self.process.clone(),
-            )));
+        for (target, path) in target_path {
+            let total = Self::get_content_length(target.as_str()).await?;
+            self.process.add_total(total);
+            let quotient = total / PARTS;
+            for i in 0..PARTS {
+                let range = format!(
+                    "{}-{}",
+                    quotient * i,
+                    if i != (PARTS - 1) {
+                        quotient * (i + 1) - 1
+                    } else {
+                        total - 1
+                    }
+                );
+                handles.push(tokio::spawn(Self::download_range(
+                    target.to_owned(),
+                    range,
+                    path.to_owned(),
+                    self.process.clone(),
+                )));
+            }
         }
         for handle in handles {
             handle.await??;
@@ -178,15 +166,11 @@ impl Task {
         headers
     }
 
-    pub async fn cancel(&self) -> Result<(), Box<dyn std::error::Error>> {
-        Ok(())
+    pub fn rm_cache(&self) {
+        helper::rm_cache(format!("{}/cache_{}/", self.save_dir, self.id));
     }
 
     pub fn state(&self) -> String {
-        format!(
-            "{}/{}",
-            self.process.finished.load(Ordering::Relaxed),
-            self.process.total.load(Ordering::Relaxed)
-        )
+        self.process.state()
     }
 }

@@ -11,13 +11,15 @@ let working = false;
 
 async function download() {
   task_id.value = await invoke("download", { target: target.value, savedir: save_dir.value });
+  working = true;
   while (working) {
-    state.value = await invoke("state");
+    state.value = await invoke("state", { id: task_id.value });
   }
 }
 
-async function terminate() {
-  await invoke("terminate");
+async function cancel() {
+  working = false
+  await invoke("cancel", { id: task_id.value });
 }
 
 
@@ -28,7 +30,7 @@ async function terminate() {
     <input id="target-input" v-model="target" placeholder="Enter a target..." />
     <input id="path-input" v-model="save_dir" placeholder="Enter a save_dir..." />
     <button type="button" @click="download()">download</button>
-    <button type="button" @click="terminate()">terminate</button>
+    <button type="button" @click="cancel()">cancel</button>
   </div>
 
   <p>{{ task_id }}</p>

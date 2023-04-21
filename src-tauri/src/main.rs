@@ -1,6 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use core_api::{downloader::Downloader, helper};
+use core_api::downloader::Downloader;
 use once_cell::sync::OnceCell;
 
 static DOWNLOADER: OnceCell<Downloader> = OnceCell::new();
@@ -18,13 +18,13 @@ fn state(id: usize) -> String {
 }
 
 #[tauri::command]
-fn terminate(id: usize) {
-    DOWNLOADER.get().unwrap().terminate(id);
+fn cancel(id: usize) {
+    DOWNLOADER.get().unwrap().cancel(id);
 }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![download, state, terminate])
+        .invoke_handler(tauri::generate_handler![download, state, cancel])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
