@@ -98,11 +98,13 @@ impl Task {
                         total - 1
                     }
                 );
+                let rx = self.rx.clone();
                 handles.push(tokio::spawn(Self::download_range(
                     target.to_owned(),
                     range,
                     path.to_owned(),
                     self.process.clone(),
+                    rx,
                 )));
             }
         }
@@ -117,6 +119,7 @@ impl Task {
         range: String,
         path: String,
         process: Arc<Process>,
+        mut rx: watch::Receiver<bool>,
     ) -> TaskResult<()> {
         let headers = Self::headers(range.as_str());
         dbg!(&headers);
@@ -125,14 +128,20 @@ impl Task {
         let mut file = helper::fs_open(&path).await;
         let offset = range.split("-").next().unwrap().parse::<u64>().unwrap();
         file.seek(SeekFrom::Start(offset)).await.unwrap();
-        // let mut temp = offset;
-        while let Some(chunk) = resp.chunk().await.unwrap() {
-            let size = chunk.len();
-            // dbg!(&size);
-            file.write_all(&chunk).await.unwrap();
-            process.add_finished(size);
-            // temp += size as u64;
-            // println!("allocated between {}-{}", temp-size, temp);
+        loop {
+            tokio::select! {
+                Ok(Some(chunk)) = resp.chunk() => {
+                    let size = chunk.len();
+                    dbg!(&size);
+                    file.write_all(&chunk).await.unwrap();
+                    process.add_finished(size);
+                }
+                _ = async {}, if rx.has_changed().unwrap() => {
+                    let _state = *rx.borrow_and_update();
+                    let _state = rx.changed().await.is_ok();
+                }
+                else => break
+            }
         }
         println!("finish range {}", range);
         Ok(())

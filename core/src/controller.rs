@@ -11,6 +11,6 @@ impl Controller {
     }
 
     pub fn switch(&self) {
-        self.tx.send(true).unwrap();
+        self.tx.send_modify(|state| *state ^= true);
     }
 }
