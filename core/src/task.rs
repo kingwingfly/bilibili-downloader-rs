@@ -3,8 +3,10 @@ use std::convert::TryInto;
 use std::io::SeekFrom;
 use std::sync::Arc;
 use tokio::io::{AsyncSeekExt, AsyncWriteExt};
+use tokio::sync::watch;
 
 use crate::config::*;
+use crate::controller::Controller;
 use crate::helper;
 use crate::process::Process;
 
@@ -16,16 +18,22 @@ pub struct Task {
     pub target: String,
     pub save_dir: String,
     pub process: Arc<Process>,
+    pub ctl: Controller,
+    pub rx: watch::Receiver<bool>,
 }
 
 impl Task {
     pub fn new(id: usize, target: String, save_dir: String) -> Self {
         let process = Arc::new(Process::new());
+        let (tx, rx) = watch::channel(false);
+
         Self {
             id,
             target,
             save_dir,
             process,
+            ctl: Controller::new(tx),
+            rx,
         }
     }
 
@@ -67,7 +75,6 @@ impl Task {
 
         let re = regex::Regex::new(r#""videoData":\{.+?"title":"(.*?)",""#).unwrap();
         let title = match_res(re.captures(&html).unwrap());
-
         Ok((v_url, a_url, title))
     }
 
@@ -131,6 +138,8 @@ impl Task {
         Ok(())
     }
 
+    pub fn switch(&self) {}
+
     async fn get_content_length(target: &str) -> TaskResult<usize> {
         Ok(Client::new()
             .head(target)
@@ -170,7 +179,37 @@ impl Task {
         helper::rm_cache(format!("{}/cache_{}/", self.save_dir, self.id));
     }
 
-    pub fn state(&self) -> String {
-        self.process.state()
+    pub fn process(&self) -> String {
+        self.process.get()
     }
 }
+
+// #[derive(Debug)]
+// pub struct TaskBuilder {
+//     pub id: usize,
+//     pub target: String,
+//     pub save_dir: String,
+//     pub process: Arc<Process>,
+// }
+
+// impl TaskBuilder {
+//     pub fn new(id: usize, target: String, save_dir: String) -> Self {
+//         let process = Arc::new(Process::new());
+//         Self {
+//             id,
+//             target,
+//             save_dir,
+//             process,
+//         }
+//     }
+
+//     pub fn build(&self) -> Task {
+//         let (tx, rx) = watch::channel(false);
+//         Task {
+//             id: todo!(),
+//             target: todo!(),
+//             save_dir: todo!(),
+//             process: todo!(),
+//         }
+//     }
+// }
