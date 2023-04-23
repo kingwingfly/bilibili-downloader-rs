@@ -5,7 +5,6 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
 use crate::executor::Executor;
-use crate::helper;
 use crate::task::Task;
 
 #[derive(Debug)]
@@ -55,7 +54,7 @@ impl Downloader {
     }
 
     pub fn switch(&self, id: usize) {
-        self.exe.swich(id);
+        self.exe.switch(id);
     }
 
     /// Terminate the Downloader

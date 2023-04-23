@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::mpsc;
 
@@ -22,7 +22,6 @@ impl Executor {
                     match msg {
                         // spawn a download
                         Message::Job(task) => {
-                            // todo Controller
                             let task = Arc::new(task);
                             tasks.insert(task.id, task.clone());
                             let task_c = task.clone();
@@ -44,7 +43,9 @@ impl Executor {
                                 None => println!("Unknown id {}", id),
                             };
                             match tasks.remove(&id) {
-                                Some(task) => task.rm_cache(),
+                                Some(task) => {
+                                    task.cancel();
+                                }
                                 None => println!("Unknown id {}", id),
                             };
                         }
@@ -56,9 +57,8 @@ impl Executor {
                         }
                         Message::Terminate => {
                             for task in tasks.values() {
-                                task.rm_cache();
+                                task.cancel();
                             }
-                            break;
                         }
                     }
                 }
@@ -83,11 +83,18 @@ impl Executor {
         self.rt.block_on(rx).unwrap()
     }
 
-    pub fn swich(&self, id: usize) {
+    pub fn switch(&self, id: usize) {
         self.rt.block_on(self.tx.send(Message::Switch(id))).unwrap();
     }
 
-    pub fn cancel(&self, id: usize) {}
+    pub fn switch_all(&self) {
+        // todo
+        todo!()
+    }
+
+    pub fn cancel(&self, id: usize) {
+        self.rt.block_on(self.tx.send(Message::Cancel(id))).unwrap();
+    }
 
     pub fn terminate(&self) {}
 }

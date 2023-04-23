@@ -8,6 +8,5 @@ mod test {
         let target = "https://www.bilibili.com/video/BV1Ao4y1b7fj/?".to_owned();
         let save_dir = "../tests/video_downloads".to_owned();
         dl.run(target, save_dir);
-        loop {}
     }
 }

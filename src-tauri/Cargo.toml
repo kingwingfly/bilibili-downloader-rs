@@ -8,14 +8,6 @@ default-run = "bili_downloader"
 repository = ""
 edition = "2021"
 
-[[test]]
-name = "download_tests"
-path = "../tests/downloader_tests.rs"
-
-[[test]]
-name = "task_tests"
-path = "../tests/task_tests.rs"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]

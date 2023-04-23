@@ -3,6 +3,14 @@ name = "core-api"
 version = "0.0.1"
 edition = "2021"
 
+[[test]]
+name = "downloader_tests"
+path = "../tests/downloader_tests.rs"
+
+[[test]]
+name = "task_tests"
+path = "../tests/task_tests.rs"
+
 [dependencies]
 tokio = { version = "1", features = [
     "fs",

@@ -11,6 +11,13 @@ impl Controller {
     }
 
     pub fn switch(&self) {
-        self.tx.send_modify(|state| *state ^= true);
+        self.tx.send_modify(|_| {});
+    }
+
+    pub fn cancel(&self) {
+        self.tx.send_modify(|state| {
+            // In task, if true, then cancel
+            *state = true;
+        });
     }
 }

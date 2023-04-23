@@ -15,11 +15,11 @@ type TaskResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
 #[derive(Debug)]
 pub struct Task {
     pub id: usize,
-    pub target: String,
-    pub save_dir: String,
-    pub process: Arc<Process>,
-    pub ctl: Controller,
-    pub rx: watch::Receiver<bool>,
+    target: String,
+    save_dir: String,
+    process: Arc<Process>,
+    ctl: Controller,
+    rx: watch::Receiver<bool>,
 }
 
 impl Task {
@@ -38,17 +38,24 @@ impl Task {
     }
 
     pub async fn execute(&self) -> TaskResult<()> {
-        // todo use tokio::sync::Semaphore;
+        helper::mkdir(format!("{}/cache_{}/", self.save_dir, self.id)).await;
         let (v_url, a_url, title) = self.parse().await?;
         dbg!(&v_url, &a_url, &title);
-        helper::mkdir(format!("{}/cache_{}/", self.save_dir, self.id)).await;
         let cache_path = |f| format!("{}/cache_{}/{title}.{f}", self.save_dir, self.id);
         let v_path = cache_path(VIDEO_FORMAT);
         let a_path = cache_path(AUDIO_FORMAT);
         let target_path = vec![(v_url, v_path.clone()), (a_url, a_path.clone())];
-        self.download(target_path).await?;
-        let out_path = format!("{}/{title}.{VIDEO_FORMAT}", self.save_dir);
-        helper::merge(v_path, a_path, out_path).await.unwrap();
+        let res = self.download(target_path).await?;
+        match res {
+            true => {
+                let out_path = format!("{}/{title}.{VIDEO_FORMAT}", self.save_dir);
+                helper::merge(v_path, a_path, out_path).await.unwrap();
+                println!("Task {} Finished", self.id);
+            }
+            false => {
+                println!("Task {} Cancelled", self.id);
+            }
+        }
         self.rm_cache();
         Ok(())
     }
@@ -82,7 +89,7 @@ impl Task {
     /// # Args
     /// `target`: A direct download url
     /// `path`: Ends with `VIDEO/AUDIO_FORMAT'
-    async fn download(&self, target_path: Vec<(String, String)>) -> TaskResult<()> {
+    async fn download(&self, target_path: Vec<(String, String)>) -> TaskResult<bool> {
         let mut handles = Vec::new();
         for (target, path) in target_path {
             let total = Self::get_content_length(target.as_str()).await?;
@@ -108,10 +115,12 @@ impl Task {
                 )));
             }
         }
+        // avoid return false to0 early, rm the cache dir, so that some panic
+        let mut res = true;
         for handle in handles {
-            handle.await??;
+            res &= handle.await??;
         }
-        Ok(())
+        Ok(res)
     }
 
     async fn download_range(
@@ -120,7 +129,7 @@ impl Task {
         path: String,
         process: Arc<Process>,
         mut rx: watch::Receiver<bool>,
-    ) -> TaskResult<()> {
+    ) -> TaskResult<bool> {
         let headers = Self::headers(range.as_str());
         dbg!(&headers);
         let client = Client::new();
@@ -128,26 +137,60 @@ impl Task {
         let mut file = helper::fs_open(&path).await;
         let offset = range.split("-").next().unwrap().parse::<u64>().unwrap();
         file.seek(SeekFrom::Start(offset)).await.unwrap();
-        loop {
+        let res = loop {
             tokio::select! {
-                Ok(Some(chunk)) = resp.chunk() => {
+                                                // avoid quick switch leading pause and working exist together
+                Ok(Some(chunk)) = resp.chunk(), if !rx.has_changed().unwrap() => {
                     let size = chunk.len();
-                    dbg!(&size);
+                    println!("{}", size);
                     file.write_all(&chunk).await.unwrap();
                     process.add_finished(size);
                 }
+                // if switch, then block
                 _ = async {}, if rx.has_changed().unwrap() => {
-                    let _state = *rx.borrow_and_update();
-                    let _state = rx.changed().await.is_ok();
+                    // mark as seen
+                    let state = *rx.borrow_and_update();
+                    match state {
+                        // true means should cancel
+                        true => {
+                            println!("Cancelled");
+                            // false means cancelled
+                            break false
+                        },
+                        false => {
+                            println!("Paused");
+                            // if just pause, block here
+                            rx.changed().await.unwrap();
+                            match *rx.borrow() {
+                                // when switch again, check whether cancel
+                                true => {
+                                    println!("Cancelled");
+                                    break false
+                                },
+                                false => println!("Restart"),
+                            }
+                        },
+                    }
+
                 }
-                else => break
+                // true if no branch live, means succeed finishing
+                else => break true
             }
+        };
+        match res {
+            true => println!("finished range {}", range),
+            false => println!("cancelled range {}", range),
         }
-        println!("finish range {}", range);
-        Ok(())
+        Ok(res)
     }
 
-    pub fn switch(&self) {}
+    pub fn switch(&self) {
+        self.ctl.switch();
+    }
+
+    pub fn cancel(&self) {
+        self.ctl.cancel();
+    }
 
     async fn get_content_length(target: &str) -> TaskResult<usize> {
         Ok(Client::new()
@@ -192,33 +235,3 @@ impl Task {
         self.process.get()
     }
 }
-
-// #[derive(Debug)]
-// pub struct TaskBuilder {
-//     pub id: usize,
-//     pub target: String,
-//     pub save_dir: String,
-//     pub process: Arc<Process>,
-// }
-
-// impl TaskBuilder {
-//     pub fn new(id: usize, target: String, save_dir: String) -> Self {
-//         let process = Arc::new(Process::new());
-//         Self {
-//             id,
-//             target,
-//             save_dir,
-//             process,
-//         }
-//     }
-
-//     pub fn build(&self) -> Task {
-//         let (tx, rx) = watch::channel(false);
-//         Task {
-//             id: todo!(),
-//             target: todo!(),
-//             save_dir: todo!(),
-//             process: todo!(),
-//         }
-//     }
-// }
