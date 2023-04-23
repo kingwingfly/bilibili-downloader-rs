@@ -17,7 +17,6 @@ impl Executor {
             let rt = helper::create_rt();
             rt.block_on(async move {
                 let mut tasks = HashMap::new();
-                let mut jhs = HashMap::new();
                 while let Some(msg) = rx.recv().await {
                     match msg {
                         // spawn a download
@@ -25,8 +24,7 @@ impl Executor {
                             let task = Arc::new(task);
                             tasks.insert(task.id, task.clone());
                             let task_c = task.clone();
-                            let jh = tokio::spawn(async move { task_c.execute().await });
-                            jhs.insert(task.id, jh);
+                            tokio::spawn(async move { task_c.execute().await });
                         }
                         // query the process
                         Message::Process((tx, id)) => {
@@ -38,10 +36,6 @@ impl Executor {
                         }
                         // cancel a download
                         Message::Cancel(id) => {
-                            match jhs.remove(&id) {
-                                Some(jh) => jh.abort(),
-                                None => println!("Unknown id {}", id),
-                            };
                             match tasks.remove(&id) {
                                 Some(task) => {
                                     task.cancel();
@@ -54,6 +48,11 @@ impl Executor {
                                 Some(task) => task.switch(),
                                 None => println!("Unknown id {}", id),
                             };
+                        }
+                        Message::SwitchAll => {
+                            for task in tasks.values() {
+                                task.switch();
+                            }
                         }
                         Message::Terminate => {
                             for task in tasks.values() {
@@ -88,13 +87,14 @@ impl Executor {
     }
 
     pub fn switch_all(&self) {
-        // todo
-        todo!()
+        self.rt.block_on(self.tx.send(Message::SwitchAll)).unwrap();
     }
 
     pub fn cancel(&self, id: usize) {
         self.rt.block_on(self.tx.send(Message::Cancel(id))).unwrap();
     }
 
-    pub fn terminate(&self) {}
+    pub fn terminate(&self) {
+        self.rt.block_on(self.tx.send(Message::Terminate)).unwrap();
+    }
 }

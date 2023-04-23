@@ -40,7 +40,7 @@ impl Downloader {
     /// The cache dir will be removed after finished */
     /// let id = dl.run(target, save_dir);
     /// ```
-    pub fn run(&self, target: String, save_dir: String) -> usize {
+    pub fn add_task(&self, target: String, save_dir: String) -> usize {
         let id = self.id_next.fetch_add(1, Ordering::SeqCst);
         let task = Task::new(id, target, save_dir);
         self.exe.spawn_task(task);
@@ -48,8 +48,7 @@ impl Downloader {
     }
 
     /// Helper function to display progress
-    /// todo
-    pub fn state(&self, id: usize) -> String {
+    pub fn process(&self, id: usize) -> String {
         self.exe.process(id)
     }
 
@@ -57,11 +56,12 @@ impl Downloader {
         self.exe.switch(id);
     }
 
-    /// Terminate the Downloader
-    /// # Attention
-    /// This will interrupt the downloading and leave the cached files undeleted.
     pub fn cancel(&self, id: usize) {
         self.exe.cancel(id);
+    }
+
+    pub fn switch_all(&self) {
+        self.exe.switch_all();
     }
 
     pub fn terminate(&self) {

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::task::Task;
 
 // state req
@@ -11,5 +9,6 @@ pub enum Message {
     Process(StReq),
     Cancel(usize),
     Switch(usize),
+    SwitchAll,
     Terminate,
 }
