@@ -1,20 +1,19 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, Ref } from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
 
 const props = defineProps<{
-    id: Number,
-    // index: Number
+    id: number,
     target: String,
-    save_dir: String
+    saveDir: String
 }>();
 
 const emit = defineEmits<{
     (e: 'rm-card'): void
 }>()
 
-// const emit = defineEmits(['rm-card'])
 
+const id = ref(props.id);
 const process = ref("");
 let working = true;
 
@@ -30,6 +29,14 @@ async function switch_() {
 async function cancel() {
     working = false
     await invoke("cancel", { id: props.id });
+}
+
+async function re_add() {
+    if (working) {
+        return;
+    }
+    working = true
+    id.value = await invoke("add_task", { target: props.target, savedir: props.saveDir }) as number;
 }
 
 async function rm() {
@@ -53,6 +60,7 @@ init()
         <div class="controller">
             <button type="button" @click="switch_()">switch state</button>
             <button type="button" @click="cancel()">cancel</button>
+            <button type="button" @click="re_add()">re-add</button>
             <button type="button" @click="rm()">remove</button>
         </div>
         <div class="taskinfo">

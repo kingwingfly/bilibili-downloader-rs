@@ -68,6 +68,15 @@
 
 This a Downloader for bilibili built by Tauri and Rust.
 
+## Important
+You need `ffmpeg` to  merge the video and audio downloaded.
+
+So, for MacOs, you need use brew to install ffmpeg, or just download one and put it into `/usr/local/bin`. For Windows, download one and add it to path. 
+
+You could also specify a path to `ffmpeg` as you like in future version.
+
+## Advantages
+
 Here are advantages:
 * Simultaneous downloads: This downloader can potentially download multiple videos at once, making it a faster and more efficient tool for users.
 * Reduced storage space: A smaller-sized image downloader can potentially take up less space on the user's device, which is especially beneficial for devices with limited storage capacity.
