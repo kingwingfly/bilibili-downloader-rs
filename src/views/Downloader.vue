@@ -1,51 +1,80 @@
 <script setup lang="ts">
-import { ref, Ref } from "vue";
+import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
 import TaskCard from "../components/TaskCard.vue"
 
 const infos = ref<{
   id: number,
   target: string,
-  saveDir: string
+  saveDir: string,
+  working: boolean
 }[]>([]);
 // c for current
 const c_id = ref<number>(0);
 const target = ref("https://www.bilibili.com/video/BV1Ao4y1b7fj/?");
 const saveDir = ref("../tests/video_downloads");
 
-async function download() {
+async function addTask() {
   c_id.value = await invoke("add_task", { target: target.value, savedir: saveDir.value }) as number;
   infos.value.push({
     id: c_id.value,
     target: target.value,
-    saveDir: saveDir.value
+    saveDir: saveDir.value,
+    working: true
   })
 }
 
 async function switchAll() {
   await invoke("switch_all")
+  for (let info of infos.value) {
+    info.working = !info.working
+  }
 }
 
 async function terminate() {
   await invoke("terminate");
+  for (let info of infos.value) {
+    info.working = false
+  }
 }
 
-// async function rm_card(index: number) {
-//   infos.value.splice(index, 1);
-// }
 </script>
 
 <template>
   <div class="container">
-    <input id="target-input" v-model="target" placeholder="Enter a target..." />
-    <input id="path-input" v-model="saveDir" placeholder="Enter a saveDir..." />
-    <button type="button" @click="download()">download</button>
-    <button type="button" @click="switchAll()">switchAll</button>
-    <button type="button" @click="terminate()">terminate</button>
-    <ul>
-      <TaskCard v-for="(info, index) in infos" :key="info.id" v-bind="info" v-model="infos" :index="index" />
-      <!-- <TaskCard v-for="(info, index) in infos" :key="info.id" v-bind="info" v-model="infos" :index="index"
-        @rm-card="rm_card(index)" /> -->
-    </ul>
+    <div class="inputs">
+      <input id="target-input" v-model="target" placeholder="Enter a target..." />
+      <input id="path-input" v-model="saveDir" placeholder="Enter a saveDir..." />
+    </div>
+    <div class="btns">
+      <button type="button" @click="addTask()">addTask</button>
+      <button type="button" @click="switchAll()">switchAll</button>
+      <button type="button" @click="terminate()">terminate</button>
+    </div>
+    <div class="task-li">
+      <ul>
+        <TaskCard v-for="(info, index) in infos" :key="info.id" v-bind="info" v-model="infos" :index="index" />
+      </ul>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.inputs {
+  width: auto;
+  height: auto;
+  background-color: #27ae60;
+}
+
+.btns {
+  width: auto;
+  height: auto;
+  background-color: #2980b9;
+}
+
+.task-li {
+  width: auto;
+  height: auto;
+  background-color: #e74c3c;
+}
+</style>

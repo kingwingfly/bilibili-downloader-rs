@@ -10,4 +10,8 @@ import Downloader from "./views/Downloader.vue";
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.main {
+  background-color: #1abc9c;
+}
+</style>

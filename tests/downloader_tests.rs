@@ -7,7 +7,11 @@ mod test {
         let dl = Downloader::new();
         let target = "https://www.bilibili.com/video/BV1Ao4y1b7fj/?".to_owned();
         let save_dir = "../tests/video_downloads".to_owned();
-        dl.add_task(target, save_dir);
+        let id = dl.add_task(target, save_dir);
+        loop {
+            let process = dl.process(id);
+            println!("{}", process);
+        }
     }
 
     #[test]

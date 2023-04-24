@@ -87,6 +87,7 @@ impl Task {
 
     /// A helper function for `Task::execute()`
     /// # Args
+    /// `target_path` is [(targte, path)]
     /// `target`: A direct download url
     /// `path`: Ends with `VIDEO/AUDIO_FORMAT'
     async fn download(&self, target_path: Vec<(String, String)>) -> TaskResult<bool> {
@@ -142,7 +143,7 @@ impl Task {
                                                 // avoid quick switch leading pause and working exist together
                 Ok(Some(chunk)) = resp.chunk(), if !rx.has_changed().unwrap() => {
                     let size = chunk.len();
-                    println!("{}", size);
+                    // println!("{}", size);
                     file.write_all(&chunk).await.unwrap();
                     process.add_finished(size);
                 }
