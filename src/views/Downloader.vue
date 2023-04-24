@@ -30,9 +30,9 @@ async function terminate() {
   await invoke("terminate");
 }
 
-async function rm_card(index: number) {
-  infos.value.splice(index, 1);
-}
+// async function rm_card(index: number) {
+//   infos.value.splice(index, 1);
+// }
 </script>
 
 <template>
@@ -43,7 +43,9 @@ async function rm_card(index: number) {
     <button type="button" @click="switchAll()">switchAll</button>
     <button type="button" @click="terminate()">terminate</button>
     <ul>
-      <task-card v-for="(info, index) in infos" :key="info.id" v-bind="info" @rm-card="rm_card(index)" />
+      <TaskCard v-for="(info, index) in infos" :key="info.id" v-bind="info" v-model="infos" :index="index" />
+      <!-- <TaskCard v-for="(info, index) in infos" :key="info.id" v-bind="info" v-model="infos" :index="index"
+        @rm-card="rm_card(index)" /> -->
     </ul>
   </div>
 </template>

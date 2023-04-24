@@ -1,55 +1,83 @@
 <script setup lang="ts">
-import { ref, Ref } from "vue";
+import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
 
 const props = defineProps<{
-    id: number,
-    target: String,
-    saveDir: String
+    // id: number,
+    // target: String,
+    // saveDir: String
+    index: number,
+    modelValue: {
+        id: number,
+        target: string,
+        saveDir: string
+    }[]
 }>();
 
 const emit = defineEmits<{
-    (e: 'rm-card'): void
+    (e: 'rm-card'): void,
+    (e: 'update:modelValue',
+        new_value: {
+            id: number,
+            target: string,
+            saveDir: string
+        }[]
+    ): void,
 }>()
 
-
-const id = ref(props.id);
+const id = props.modelValue[props.index].id;
+const target = props.modelValue[props.index].target;
+const saveDir = props.modelValue[props.index].saveDir
 const process = ref("");
 let working = true;
 
 
 async function switch_() {
-    await invoke("switch", { id: props.id })
+    await invoke("switch", { id: id })
     working = !working;
-    while (working) {
-        process.value = await invoke("process", { id: props.id });
-    }
+    init();
 }
 
 async function cancel() {
     working = false
-    await invoke("cancel", { id: props.id });
+    await invoke("cancel", { id: id });
 }
 
 async function re_add() {
     if (working) {
         return;
     }
-    working = true
-    id.value = await invoke("add_task", { target: props.target, savedir: props.saveDir }) as number;
+    set_id(await invoke("add_task", { target: target, savedir: saveDir }) as number);
+    working = true;
+    init();
 }
 
 async function rm() {
     await cancel();
-    emit('rm-card');
+    working = false;
+    props.modelValue.splice(props.index, 1);
 }
 
 async function init() {
     while (working) {
-        process.value = await invoke("process", { id: props.id });
+        process.value = await invoke("process", { id: id });
+        let [finished, total] = process.value.split("/");
+        if (finished == total && total != "0") {
+            working = false;
+        }
+        await new Promise(f => setTimeout(f, 1000));
     }
+    process.value = `Finished: ${process.value}`;
 }
 
+// Some helper function
+function got_info() {
+    return props.modelValue[props.index]
+}
+
+function set_id(id: number) {
+    got_info().id = id;
+}
 
 
 init()
@@ -64,7 +92,7 @@ init()
             <button type="button" @click="rm()">remove</button>
         </div>
         <div class="taskinfo">
-            <p>{{ props.id }}</p>
+            <p>{{ props.modelValue[props.index].id }}</p>
             <p>{{ process }}</p>
         </div>
     </li>
