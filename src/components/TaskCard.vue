@@ -8,7 +8,7 @@ const props = defineProps<{
         id: number,
         target: string,
         saveDir: string,
-        working: boolean
+        state: number
     }[]
 }>();
 
@@ -18,53 +18,63 @@ const emit = defineEmits<{
             id: number,
             target: string,
             saveDir: string,
-            working: boolean
+            state: boolean
         }[]
     ): void,
 }>()
 
 const target = props.modelValue[props.index].target;
 const saveDir = props.modelValue[props.index].saveDir
-const process = ref("");
+const state = ref("");
+let title = ref("");
 
 
 async function switch_() {
-    await invoke("switch", { id: get_id() })
-    switch_working();
+    await invoke("switch", { id: get_id() });
+    await refresh_state();
     init();
 }
 
 async function cancel() {
-    set_working(false);
     await invoke("cancel", { id: get_id() });
+    await refresh_state();
 }
 
 async function re_add() {
-    if (check_working()) {
-        return;
-    }
+    await invoke("cancel", { id: get_id() })
     set_id(await invoke("add_task", { target: target, savedir: saveDir }) as number);
-    set_working(true);
+    await refresh_state()
     init();
 }
 
 async function rm() {
     await cancel();
-    set_working(false);
+    await refresh_state()
     props.modelValue.splice(props.index, 1);
 }
 
 async function init() {
-    while (check_working()) {
-        process.value = await invoke("process", { id: get_id() });
-        let [finished, total] = process.value.split("/");
-        if (finished == total && total != "0") {
-            set_working(false);
-        }
-        await new Promise(f => setTimeout(f, 10));
+    let before = 0;
+    while (check_state()) {
+        title.value = await invoke("title", { id: get_id() }) as string;
+        let c_process = await invoke("process", { id: get_id() }) as string;
+        let now = parseFloat(c_process.split("Mb")[0]);
+        state.value = `Working: ${c_process}; Speed: ${(now - before).toFixed(2)} Mb/s`;
+        await new Promise(f => setTimeout(f, 1000));
+        before = now;
+        await refresh_state()
     }
-    process.value = `Finished: ${process.value}`;
+    let c_state = get_info().state;
+    if (c_state === 1) {
+        state.value = `Pausing`;
+    } else if (c_state === 2) {
+        state.value = `Cancelled`;
+    } else {
+        let c_process = await invoke("process", { id: get_id() });
+        state.value = `Finished: ${c_process}`;
+    }
 }
+
 init()
 
 // Some helper function
@@ -80,16 +90,16 @@ function get_id() {
     return get_info().id
 }
 
-function check_working() {
-    return get_info().working
+function check_state() {
+    if (get_info().state === 0) {
+        return true
+    } else {
+        return false
+    }
 }
 
-function switch_working() {
-    get_info().working = !get_info().working;
-}
-
-function set_working(working: boolean) {
-    get_info().working = working;
+async function refresh_state() {
+    get_info().state = await invoke("state", { id: get_id() }) as number;
 }
 
 </script>
@@ -103,17 +113,10 @@ function set_working(working: boolean) {
             <button type="button" @click="rm()">remove</button>
         </div>
         <div class="taskinfo">
-            <p>{{ props.modelValue[props.index].id }}</p>
-            <p>{{ process }}</p>
+            <p>{{ get_id() }}: {{ title }}</p>
+            <p>{{ state }}</p>
         </div>
     </li>
-    <p>{{ check_working() }}</p>
 </template>
 
-<style scoped>
-.task-li {
-    width: auto;
-    height: auto;
-    background-color: #e74c3c;
-}
-</style>
+<style scoped></style>

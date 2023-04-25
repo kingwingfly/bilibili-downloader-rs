@@ -7,7 +7,7 @@ const infos = ref<{
   id: number,
   target: string,
   saveDir: string,
-  working: boolean
+  state: number
 }[]>([]);
 // c for current
 const c_id = ref<number>(0);
@@ -20,21 +20,21 @@ async function addTask() {
     id: c_id.value,
     target: target.value,
     saveDir: saveDir.value,
-    working: true
+    state: 0
   });
 }
 
 async function switchAll() {
   await invoke("switch_all")
   for (let info of infos.value) {
-    info.working = !info.working
+    info.state = await invoke("state", { id: info.id }) as number;
   }
 }
 
 async function terminate() {
   await invoke("terminate");
   for (let info of infos.value) {
-    info.working = false
+    info.state = await invoke("state", { id: info.id }) as number;
   }
 }
 
@@ -42,6 +42,7 @@ async function terminate() {
 
 <template>
   <div class="container">
+    <h1>Bilibili Downloader</h1>
     <div class="inputs">
       <input id="target-input" v-model="target" placeholder="Enter a target..." />
       <input id="path-input" v-model="saveDir" placeholder="Enter a saveDir..." />
@@ -52,6 +53,7 @@ async function terminate() {
       <button type="button" @click="terminate()">terminate</button>
     </div>
     <div class="task-li">
+      <h1>Task List</h1>
       <ul>
         <TaskCard v-for="(info, index) in infos" :key="info.id" v-bind="info" v-model="infos" :index="index" />
       </ul>

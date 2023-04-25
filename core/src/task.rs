@@ -1,9 +1,11 @@
 use reqwest::{header, Client};
+use std::cell::RefCell;
 use std::convert::TryInto;
 use std::io::SeekFrom;
 use std::sync::Arc;
 use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 use tokio::sync::watch;
+use tokio::sync::Mutex;
 
 use crate::config::*;
 use crate::controller::Controller;
@@ -18,6 +20,7 @@ pub struct Task {
     pub id: usize,
     target: String,
     save_dir: String,
+    title: Arc<Mutex<RefCell<String>>>,
     process: Arc<Process>,
     ctl: Controller,
     rx: watch::Receiver<bool>,
@@ -32,6 +35,7 @@ impl Task {
             id,
             target,
             save_dir,
+            title: Arc::new(Mutex::new(RefCell::new(String::new()))),
             process,
             ctl: Controller::new(tx),
             rx,
@@ -43,6 +47,10 @@ impl Task {
         helper::mkdir(format!("{}/cache_{}/", self.save_dir, self.id)).await;
         let (v_url, a_url, title) = self.parse().await?;
         dbg!(&v_url, &a_url, &title);
+        {
+            let title_ = self.title.lock().await;
+            title_.replace(title.clone());
+        }
         let cache_path = |f| format!("{}/cache_{}/{title}.{f}", self.save_dir, self.id);
         let v_path = cache_path(VIDEO_FORMAT);
         let a_path = cache_path(AUDIO_FORMAT);
@@ -236,6 +244,13 @@ impl Task {
 
     fn rm_cache(&self) {
         helper::rm_cache(format!("{}/cache_{}/", self.save_dir, self.id));
+    }
+
+    pub fn title(&self) -> String {
+        match self.title.try_lock() {
+            Ok(title) => title.borrow().to_owned(),
+            Err(_) => String::new(),
+        }
     }
 
     pub fn process(&self) -> String {

@@ -42,6 +42,14 @@ impl Executor {
                             };
                             tx.send(state_code).unwrap();
                         }
+                        // query title
+                        Message::Title((tx, id)) => {
+                            let title = match tasks.get(&id) {
+                                Some(task) => task.title(),
+                                None => format!("Unknown id {}", id),
+                            };
+                            tx.send(title).unwrap();
+                        }
                         // cancel a download
                         Message::Cancel(id) => {
                             match tasks.remove(&id) {
@@ -106,6 +114,14 @@ impl Executor {
         let (tx, rx) = tokio::sync::oneshot::channel();
         self.rt
             .block_on(self.tx.send(Message::State((tx, id))))
+            .unwrap();
+        self.rt.block_on(rx).unwrap()
+    }
+
+    pub fn title(&self, id: usize) -> String {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.rt
+            .block_on(self.tx.send(Message::Title((tx, id))))
             .unwrap();
         self.rt.block_on(rx).unwrap()
     }

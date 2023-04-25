@@ -47,6 +47,10 @@ impl Downloader {
         id
     }
 
+    pub fn title(&self, id: usize) -> String {
+        self.exe.title(id)
+    }
+
     pub fn process(&self, id: usize) -> String {
         self.exe.process(id)
     }

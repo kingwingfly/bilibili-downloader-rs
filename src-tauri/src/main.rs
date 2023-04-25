@@ -13,6 +13,13 @@ fn add_task(target: String, savedir: String) -> usize {
 }
 
 #[tauri::command]
+fn title(id: usize) -> String {
+    DOWNLOADER
+        .get()
+        .map_or_else(|| return String::new(), |dl| dl.title(id))
+}
+
+#[tauri::command]
 fn process(id: usize) -> String {
     DOWNLOADER
         .get()
@@ -54,7 +61,7 @@ fn terminate() {
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            add_task, process, state, switch, cancel, switch_all, terminate
+            add_task, title, process, state, switch, cancel, switch_all, terminate
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
