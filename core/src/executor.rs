@@ -34,6 +34,14 @@ impl Executor {
                             };
                             tx.send(process).unwrap();
                         }
+                        // query state
+                        Message::State((tx, id)) => {
+                            let state_code = match tasks.get(&id) {
+                                Some(task) => task.state(),
+                                None => 404,
+                            };
+                            tx.send(state_code).unwrap();
+                        }
                         // cancel a download
                         Message::Cancel(id) => {
                             match tasks.remove(&id) {
@@ -92,6 +100,14 @@ impl Executor {
 
     pub fn cancel(&self, id: usize) {
         self.rt.block_on(self.tx.send(Message::Cancel(id))).unwrap();
+    }
+
+    pub fn state(&self, id: usize) -> usize {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        self.rt
+            .block_on(self.tx.send(Message::State((tx, id))))
+            .unwrap();
+        self.rt.block_on(rx).unwrap()
     }
 
     pub fn terminate(&self) {

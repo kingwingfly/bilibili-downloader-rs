@@ -34,6 +34,8 @@ impl Process {
     }
 
     pub fn get(&self) -> String {
-        format!("{}/{}", self.finished(), self.total())
+        let finished = self.finished() as f64 / 125000.0;
+        let total = self.total() as f64 / 125000.0;
+        format!("{:.2}/{:.2}", finished, total)
     }
 }

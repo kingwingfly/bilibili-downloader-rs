@@ -9,6 +9,7 @@ use crate::config::*;
 use crate::controller::Controller;
 use crate::helper;
 use crate::process::Process;
+use crate::state::FSM;
 
 type TaskResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
@@ -20,13 +21,13 @@ pub struct Task {
     process: Arc<Process>,
     ctl: Controller,
     rx: watch::Receiver<bool>,
+    fsm: FSM,
 }
 
 impl Task {
     pub fn new(id: usize, target: String, save_dir: String) -> Self {
         let process = Arc::new(Process::new());
         let (tx, rx) = watch::channel(false);
-
         Self {
             id,
             target,
@@ -34,6 +35,7 @@ impl Task {
             process,
             ctl: Controller::new(tx),
             rx,
+            fsm: FSM::new(),
         }
     }
 
@@ -50,9 +52,11 @@ impl Task {
             true => {
                 let out_path = format!("{}/{title}.{VIDEO_FORMAT}", self.save_dir);
                 helper::merge(v_path, a_path, out_path).await.unwrap();
+                self.fsm.finish();
                 println!("Task {} Finished", self.id);
             }
             false => {
+                self.fsm.cancel();
                 println!("Task {} Cancelled", self.id);
             }
         }
@@ -147,7 +151,7 @@ impl Task {
                     file.write_all(&chunk).await.unwrap();
                     process.add_finished(size);
                 }
-                // if switch, then block
+                // if switch or cancel, then block
                 _ = async {}, if rx.has_changed().unwrap() => {
                     // mark as seen
                     let state = *rx.borrow_and_update();
@@ -186,10 +190,12 @@ impl Task {
     }
 
     pub fn switch(&self) {
+        self.fsm.switch();
         self.ctl.switch();
     }
 
     pub fn cancel(&self) {
+        // self.fms.cancel() execute in self.execute()
         self.ctl.cancel();
     }
 
@@ -228,11 +234,15 @@ impl Task {
         headers
     }
 
-    pub fn rm_cache(&self) {
+    fn rm_cache(&self) {
         helper::rm_cache(format!("{}/cache_{}/", self.save_dir, self.id));
     }
 
     pub fn process(&self) -> String {
         self.process.get()
+    }
+
+    pub fn state(&self) -> usize {
+        self.fsm.now_state_code()
     }
 }

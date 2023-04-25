@@ -38,7 +38,7 @@ impl Downloader {
     /// /* A cache dir will be made right beside the `save_dir`,
     /// and video will be saved at `save_dir`.
     /// The cache dir will be removed after finished */
-    /// let id = dl.run(target, save_dir);
+    /// let id = dl.add_task(target, save_dir);
     /// ```
     pub fn add_task(&self, target: String, save_dir: String) -> usize {
         let id = self.id_next.fetch_add(1, Ordering::SeqCst);
@@ -47,9 +47,12 @@ impl Downloader {
         id
     }
 
-    /// Helper function to display progress
     pub fn process(&self, id: usize) -> String {
         self.exe.process(id)
+    }
+
+    pub fn state(&self, id: usize) -> usize {
+        self.exe.state(id)
     }
 
     pub fn switch(&self, id: usize) {

@@ -20,6 +20,14 @@ fn process(id: usize) -> String {
 }
 
 #[tauri::command]
+fn state(id: usize) -> usize {
+    DOWNLOADER
+        .get()
+        .map_or_else(|| return 404, |dl| dl.state(id))
+    // 0 working; 1 pausing; 2 cancelled; 3 finished
+}
+
+#[tauri::command]
 fn switch(id: usize) {
     DOWNLOADER
         .get()
@@ -46,7 +54,7 @@ fn terminate() {
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            add_task, process, switch, cancel, switch_all, terminate
+            add_task, process, state, switch, cancel, switch_all, terminate
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -21,7 +21,7 @@ async function addTask() {
     target: target.value,
     saveDir: saveDir.value,
     working: true
-  })
+  });
 }
 
 async function switchAll() {
