@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
 
 const props = defineProps<{
@@ -41,15 +41,14 @@ async function cancel() {
 }
 
 async function re_add() {
-    await invoke("cancel", { id: get_id() })
+    await invoke("cancel", { id: get_id() });
     set_id(await invoke("add_task", { target: target, savedir: saveDir }) as number);
-    await refresh_state()
-    init();
+    await refresh_state();
 }
 
 async function rm() {
     await cancel();
-    await refresh_state()
+    // await new Promise(f => setTimeout(f, 1000));
     props.modelValue.splice(props.index, 1);
 }
 
@@ -69,13 +68,28 @@ async function init() {
         state.value = `Pausing`;
     } else if (c_state === 2) {
         state.value = `Cancelled`;
-    } else {
+    } else if (c_state === 3) {
         let c_process = await invoke("process", { id: get_id() });
         state.value = `Finished: ${c_process}`;
+    } else {
+        state.value = `Cancelled or Unknown id`;
     }
 }
 
-init()
+onMounted(() => {
+    init();
+})
+
+const task_state = computed(() => ({
+    'working': get_info().state === 0,
+    'pausing': get_info().state === 1,
+    'cancelled': get_info().state === 404,
+    'finished': get_info().state === 3,
+}))
+
+watch(task_state, () => {
+    if (get_info().state === 0) { init(); }
+});
 
 // Some helper function
 function get_info() {
@@ -105,7 +119,7 @@ async function refresh_state() {
 </script>
 
 <template>
-    <li class="task-li">
+    <li class="task" :class="task_state">
         <div class="controller">
             <button type="button" @click="switch_()">switch state</button>
             <button type="button" @click="cancel()">cancel</button>
@@ -119,4 +133,20 @@ async function refresh_state() {
     </li>
 </template>
 
-<style scoped></style>
+<style scoped>
+.task.working {
+    background-color: #f1c40f;
+}
+
+.task.pausing {
+    background-color: #c0392b;
+}
+
+.task.cancelled {
+    background-color: #95a5a6;
+}
+
+.task.finished {
+    background-color: #2ecc71;
+}
+</style>

@@ -128,7 +128,7 @@ impl Task {
                 )));
             }
         }
-        // avoid return false to0 early, rm the cache dir, so that some panic
+        // avoid return false too fast, rm the cache dir, lead to panic
         let mut res = true;
         for handle in handles {
             res &= handle.await??;

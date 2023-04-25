@@ -52,7 +52,7 @@ async function terminate() {
       <button type="button" @click="switchAll()">switchAll</button>
       <button type="button" @click="terminate()">terminate</button>
     </div>
-    <div class="task-li">
+    <div class="task-list">
       <h1>Task List</h1>
       <ul>
         <TaskCard v-for="(info, index) in infos" :key="info.id" v-bind="info" v-model="infos" :index="index" />
@@ -74,9 +74,16 @@ async function terminate() {
   background-color: #2980b9;
 }
 
-.task-li {
+.task-list {
   width: auto;
   height: auto;
   background-color: #e74c3c;
+  list-style: none;
+}
+
+ul {
+  padding: 0;
+  margin: 0;
+
 }
 </style>
