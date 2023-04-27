@@ -1,3 +1,6 @@
+//! Control the switch and cancel
+//! through a watch channel
+
 use tokio::sync::watch;
 
 #[derive(Debug)]

@@ -1,5 +1,5 @@
 //! Downloader
-//! Create a thread and spawn tasks through `run` on it, then run them asynchronously
+//! Ask executor to control tasks
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;

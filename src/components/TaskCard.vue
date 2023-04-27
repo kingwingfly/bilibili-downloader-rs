@@ -136,17 +136,72 @@ async function refresh_state() {
 <style scoped>
 .task.working {
     background-color: #f1c40f;
+    list-style: none;
+    border-radius: 20px;
+    padding: 10px 0px 0px 0px;
+    animation: fade-in 1s forwards cubic-bezier(.64, 1.87, .64, .64);
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+        transform: translateX(-30%);
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 .task.pausing {
     background-color: #c0392b;
+    list-style: none;
+    border-radius: 20px;
+    padding: 10px 0px 0px 0px;
 }
 
 .task.cancelled {
     background-color: #95a5a6;
+    list-style: none;
+    border-radius: 20px;
+    padding: 10px 0px 0px 0px;
+    animation: cancel-ani 1s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes cancel-ani {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 .task.finished {
     background-color: #2ecc71;
+    list-style: none;
+    border-radius: 20px;
+    padding: 10px 0px 0px 0px;
+    animation: finished-ani 1s cubic-bezier(.64, .64, .64, 1.87);
+}
+
+@keyframes finished-ani {
+    0% {
+        opacity: 1;
+    }
+
+    20% {
+        opacity: 0.5;
+        transform: translateX(10%);
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 </style>

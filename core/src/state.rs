@@ -1,3 +1,6 @@
+//! This is state recorder;
+//! Implement by Finite State Machine (FSM)
+
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 // working pausing cancelled finished

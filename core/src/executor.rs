@@ -1,3 +1,5 @@
+//! Create a thread and spawn tasks through `add task` on it, then run them asynchronously
+
 use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::mpsc;

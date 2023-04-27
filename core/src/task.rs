@@ -1,3 +1,5 @@
+//! The task, including execute, operations and query functions.
+
 use reqwest::{header, Client};
 use std::cell::RefCell;
 use std::convert::TryInto;
@@ -99,7 +101,7 @@ impl Task {
 
     /// A helper function for `Task::execute()`
     /// # Args
-    /// `target_path` is [(targte, path)]
+    /// `target_path` is in the form of [(targte, path)]
     /// `target`: A direct download url
     /// `path`: Ends with `VIDEO/AUDIO_FORMAT'
     async fn download(&self, target_path: Vec<(String, String)>) -> TaskResult<bool> {
@@ -186,7 +188,7 @@ impl Task {
                     }
 
                 }
-                // true if no branch live, means succeed finishing
+                // true if no branch match, means succeed finishing
                 else => break true
             }
         };

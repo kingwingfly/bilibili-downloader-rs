@@ -76,7 +76,7 @@ async function terminate() {
 
 .task-list {
   width: auto;
-  height: auto;
+  height: flex;
   background-color: #e74c3c;
   list-style: none;
 }
@@ -84,6 +84,6 @@ async function terminate() {
 ul {
   padding: 0;
   margin: 0;
-
+  padding: 0px 15px 0px 15px;
 }
 </style>
