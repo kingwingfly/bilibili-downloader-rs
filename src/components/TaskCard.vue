@@ -7,7 +7,6 @@ const props = defineProps<{
     modelValue: {
         id: number,
         target: string,
-        saveDir: string,
         state: number
     }[]
 }>();
@@ -17,14 +16,12 @@ const emit = defineEmits<{
         new_value: {
             id: number,
             target: string,
-            saveDir: string,
             state: boolean
         }[]
     ): void,
 }>()
 
-const target = props.modelValue[props.index].target;
-const saveDir = props.modelValue[props.index].saveDir
+const target = computed(() => props.modelValue[props.index].target);
 const state = ref("");
 let title = ref("");
 
@@ -42,7 +39,7 @@ async function cancel() {
 
 async function re_add() {
     await invoke("cancel", { id: get_id() });
-    set_id(await invoke("add_task", { target: target, savedir: saveDir }) as number);
+    set_id(await invoke("add_task", { target: target }) as number);
     await refresh_state();
 }
 

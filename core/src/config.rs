@@ -1,9 +1,85 @@
 //! config
 //! Maybe some config helper functions
 
+use crate::helper;
+use once_cell::sync::OnceCell;
+use serde::{Deserialize, Serialize};
+use std::io::Write;
+
 pub(crate) const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15";
-pub(crate) const COOKIE: &str = "CURRENT_FNVAL=4048; innersign=1; b_lsid=4C5D10AE2_18793225EED; bp_video_offset_32280488=785774145476493300; home_feed_column=4; FEED_LIVE_VERSION=V8; buvid4=2CDBDCD3-F6FF-B411-126E-BD175A161B8579338-022122219-0JGgJAvBL8TSMtvBMBpNoA%3D%3D; header_theme_version=CLOSE; i-wanna-go-back=-1; PVID=2; buvid_fp=dc35292e2c879f33da92c570dad80075; buvid_fp_plain=undefined; fingerprint=dc35292e2c879f33da92c570dad80075; CURRENT_BLACKGAP=0; is-2022-channel=1; CURRENT_PID=2e802d90-ca75-11ed-8830-7f48e1eb993c; CURRENT_QUALITY=112; hit-dyn-v2=1; hit-new-style-dyn=0; _uuid=1EB2A6D5-8318-10F63-E5C5-33BE45724DBC56564infoc; DedeUserID=32280488; DedeUserID__ckMd5=2ae085b4230bcd66; SESSDATA=aa1e6179%2C1687154862%2C5de75%2Ac2; bili_jct=05ab986191069c8db93ced776ad9b343; sid=8g6487kc; LIVE_BUVID=AUTO9516695486767921; rpdid=|(J~JYku|uuY0J'uYY)Y)kJ)|; b_ut=5; nostalgia_conf=-1; b_nut=1663776049; buvid3=1FF87ED7-2D57-84BE-3FD0-8F03EC5B47F949754infoc";
-pub(crate) const PARTS: usize = 1;
+pub(crate) static COOKIE: OnceCell<String> = OnceCell::new();
+pub(crate) static PARTS: OnceCell<usize> = OnceCell::new();
+pub(crate) static SAVE_PATH: OnceCell<String> = OnceCell::new();
 pub(crate) const VIDEO_FORMAT: &str = "mp4";
 pub(crate) const AUDIO_FORMAT: &str = "aac";
 // todo config
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Config {
+    cookie: String,
+    save_path: String,
+    parts: usize,
+}
+
+impl Config {
+    fn apply(&self) {
+        COOKIE.set(self.cookie.to_owned()).unwrap();
+        SAVE_PATH.set(self.save_path.to_owned()).unwrap();
+        PARTS.set(self.parts).unwrap();
+    }
+}
+
+pub fn use_config() {
+    let config_path = helper::config_path();
+    let file = std::fs::OpenOptions::new().read(true).open(config_path);
+    match file {
+        Ok(file) => {
+            let config = serde_json::from_reader::<_, Config>(file).unwrap();
+            config.apply();
+        }
+        Err(_) => {
+            let config = Config {
+                cookie: String::new(),
+                save_path: helper::download_dir().to_str().unwrap().to_owned(),
+                parts: 2,
+            };
+            config.apply();
+        }
+    }
+}
+
+pub fn submit_config(cookie: String, save_path: String, parts: usize) {
+    let config_path = helper::config_path();
+    let config = Config {
+        cookie,
+        save_path,
+        parts,
+    };
+    let config_json = serde_json::to_string(&config).unwrap();
+    let mut file = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(config_path)
+        .unwrap();
+    file.write_all(config_json.as_bytes()).unwrap();
+}
+
+pub fn read_config() -> (String, String, usize) {
+    let config_path = helper::config_path();
+    let file = std::fs::OpenOptions::new().read(true).open(config_path);
+    match file {
+        Ok(file) => {
+            let config = serde_json::from_reader::<_, Config>(file).unwrap();
+            (config.cookie, config.save_path, config.parts)
+        }
+        Err(_) => {
+            let config = Config {
+                cookie: String::new(),
+                save_path: helper::download_dir().to_str().unwrap().to_owned(),
+                parts: 2,
+            };
+            (config.cookie, config.save_path, config.parts)
+        }
+    }
+}

@@ -1,5 +1,6 @@
 //! Helper funtions for bili_downlader
 
+use tauri::api::path;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::BufWriter;
 use tokio::process::Command;
@@ -31,6 +32,18 @@ pub async fn mkdir<P: AsRef<std::path::Path>>(path: P) {
 /// Remove the cache folder
 pub(crate) fn rm_cache<P: AsRef<std::path::Path>>(cache_path: P) {
     std::fs::remove_dir_all(cache_path).unwrap();
+}
+
+pub fn download_dir() -> std::path::PathBuf {
+    path::download_dir().unwrap()
+}
+
+pub(crate) fn config_path() -> std::path::PathBuf {
+    let mut config_path = path::config_dir().unwrap();
+    config_path.push("bili_downloader");
+    std::fs::create_dir_all(&config_path).unwrap();
+    config_path.push("bili_downloader_config.json");
+    config_path
 }
 
 /// Merge video and audio using this command:

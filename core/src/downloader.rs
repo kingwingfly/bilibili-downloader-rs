@@ -4,6 +4,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
+use crate::config;
 use crate::executor::Executor;
 use crate::task::Task;
 
@@ -21,6 +22,7 @@ impl Downloader {
     /// let dl = Downloader::new();
     /// ```
     pub fn new() -> Self {
+        config::use_config();
         let exe = Arc::new(Executor::new());
         Self {
             id_next: AtomicUsize::new(0),
@@ -40,9 +42,9 @@ impl Downloader {
     /// The cache dir will be removed after finished */
     /// let id = dl.add_task(target, save_dir);
     /// ```
-    pub fn add_task(&self, target: String, save_dir: String) -> usize {
+    pub fn add_task(&self, target: String) -> usize {
         let id = self.id_next.fetch_add(1, Ordering::SeqCst);
-        let task = Task::new(id, target, save_dir);
+        let task = Task::new(id, target);
         self.exe.spawn_task(task);
         id
     }

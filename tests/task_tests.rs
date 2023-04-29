@@ -11,7 +11,6 @@ mod test {
         let tsk = Task::new(
             0,
             "https://www.bilibili.com/video/BV1Ao4y1b7fj/?".to_owned(),
-            "../tests/video_downloads".to_owned(),
         );
         rt.block_on(tsk.execute()).unwrap();
     }
@@ -22,7 +21,6 @@ mod test {
         let task = Arc::new(Task::new(
             0,
             "https://www.bilibili.com/video/BV1Ao4y1b7fj/?".to_owned(),
-            "../tests/video_downloads".to_owned(),
         ));
         rt.block_on(async move {
             let task_c = task.clone();
@@ -43,7 +41,6 @@ mod test {
         let task = Arc::new(Task::new(
             0,
             "https://www.bilibili.com/video/BV1Ao4y1b7fj/?".to_owned(),
-            "../tests/video_downloads".to_owned(),
         ));
         rt.block_on(async move {
             let task_c = task.clone();
@@ -66,7 +63,6 @@ mod test {
         let task = Arc::new(Task::new(
             0,
             "https://www.bilibili.com/video/BV1Ao4y1b7fj/?".to_owned(),
-            "../tests/video_downloads".to_owned(),
         ));
         rt.block_on(async move {
             let task_c = task.clone();
@@ -90,7 +86,6 @@ mod test {
         let task = Arc::new(Task::new(
             0,
             "https://www.bilibili.com/video/BV1Ao4y1b7fj/?".to_owned(),
-            "../tests/video_downloads".to_owned(),
         ));
         rt.block_on(async move {
             let task_c = task.clone();
@@ -110,7 +105,6 @@ mod test {
         let task = Arc::new(Task::new(
             0,
             "https://www.bilibili.com/video/BV1Ao4y1b7fj/?".to_owned(),
-            "../tests/video_downloads".to_owned(),
         ));
         rt.block_on(async move {
             let task_c = task.clone();

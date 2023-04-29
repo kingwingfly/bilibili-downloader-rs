@@ -1,25 +1,22 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
 import TaskCard from "../components/TaskCard.vue"
 
 const infos = ref<{
   id: number,
   target: string,
-  saveDir: string,
   state: number
 }[]>([]);
 // c for current
 const c_id = ref<number>(0);
 const target = ref("https://www.bilibili.com/video/BV1Ao4y1b7fj/?");
-const saveDir = ref("../tests/video_downloads");
 
 async function addTask() {
-  c_id.value = await invoke("add_task", { target: target.value, savedir: saveDir.value }) as number;
+  c_id.value = await invoke("add_task", { target: target.value }) as number;
   infos.value.push({
     id: c_id.value,
     target: target.value,
-    saveDir: saveDir.value,
     state: 0
   });
 }
@@ -45,7 +42,6 @@ async function terminate() {
     <h1>Bilibili Downloader</h1>
     <div class="inputs">
       <input id="target-input" v-model="target" placeholder="Enter a target..." />
-      <input id="path-input" v-model="saveDir" placeholder="Enter a saveDir..." />
     </div>
     <div class="btns">
       <button type="button" @click="addTask()">addTask</button>

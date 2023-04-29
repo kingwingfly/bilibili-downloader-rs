@@ -30,13 +30,13 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn new(id: usize, target: String, save_dir: String) -> Self {
+    pub fn new(id: usize, target: String) -> Self {
         let process = Arc::new(Process::new());
         let (tx, rx) = watch::channel(false);
         Self {
             id,
             target,
-            save_dir,
+            save_dir: SAVE_PATH.get().unwrap().to_owned(),
             title: Arc::new(Mutex::new(RefCell::new(String::new()))),
             process,
             ctl: Controller::new(tx),
@@ -81,7 +81,7 @@ impl Task {
         let client = Client::new();
         let resp = client
             .get(&self.target)
-            .header(header::COOKIE, COOKIE)
+            .header(header::COOKIE, COOKIE.get().unwrap())
             // .header(header::ACCEPT, "text/html")
             .header(header::USER_AGENT, USER_AGENT)
             .send()
@@ -109,12 +109,12 @@ impl Task {
         for (target, path) in target_path {
             let total = Self::get_content_length(target.as_str()).await?;
             self.process.add_total(total);
-            let quotient = total / PARTS;
-            for i in 0..PARTS {
+            let quotient = total / PARTS.get().unwrap();
+            for i in 0..*PARTS.get().unwrap() {
                 let range = format!(
                     "{}-{}",
                     quotient * i,
-                    if i != (PARTS - 1) {
+                    if i != (PARTS.get().unwrap() - 1) {
                         quotient * (i + 1) - 1
                     } else {
                         total - 1
