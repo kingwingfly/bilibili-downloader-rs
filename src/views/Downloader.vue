@@ -10,7 +10,7 @@ const infos = ref<{
 }[]>([]);
 // c for current
 const c_id = ref<number>(0);
-const target = ref("https://www.bilibili.com/video/BV1Ao4y1b7fj/?");
+const target = ref("");
 
 async function addTask() {
   c_id.value = await invoke("add_task", { target: target.value }) as number;

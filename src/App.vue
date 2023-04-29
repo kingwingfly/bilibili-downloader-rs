@@ -6,7 +6,7 @@ import Config from "./views/Config.vue";
 import { ref } from "vue";
 
 const hide = ref({
-  hide: false
+  hide: true
 });
 
 async function switch_show() {

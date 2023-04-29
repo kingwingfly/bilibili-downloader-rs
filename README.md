@@ -66,6 +66,8 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://github.com/kingwingfly/bilibili-downloader-rs/)
 
+[![Product Architecture][architecture]](https://github.com/kingwingfly/bilibili-downloader-rs/)
+
 This a Downloader for bilibili built by Tauri and Rust.
 
 ## Important
@@ -104,11 +106,11 @@ You can compile by yourself, or just got release [here](https://github.com/kingw
 ### Prerequisites
 
 You need rust, tauri-cli, npm first. 
-* rust
+* npm
   ```sh
   npm install npm@latest -g
   ```
-* rust
+* tauri
   ```sh
   cargo install create-tauri-app
   ```
@@ -226,7 +228,8 @@ Some document may help in develop tauri app and crawler.
 [license-url]: https://github.com/kingwingfly/bilibili-downloader-rs/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/othneildrew
-[product-screenshot]: static/architecture.png
+[product-screenshot]: static/screenshot.png
+[architecture]: static/architecture.png
 [RustLogo]: https://www.rust-lang.org/static/images/rust-logo-blk.svg
 [Rust-url]: https://github.com/rust-lang/rust
 [TauriLogo]: https://github.com/tauri-apps/tauri/blob/dev/.github/splash.png?raw=true

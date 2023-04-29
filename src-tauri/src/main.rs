@@ -66,12 +66,12 @@ fn download_dir() -> String {
 }
 
 #[tauri::command]
-fn submit_config(cookie: String, savedir: String, parts: usize) {
-    config::submit_config(cookie, savedir, parts)
+fn submit_config(cookie: String, savedir: String, parts: usize, ffmpeg: String) {
+    config::submit_config(cookie, savedir, parts, ffmpeg);
 }
 
 #[tauri::command]
-fn read_config() -> (String, String, usize) {
+fn read_config() -> (String, String, usize, String) {
     config::read_config()
 }
 

@@ -10,6 +10,7 @@ pub(crate) const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_1
 pub(crate) static COOKIE: OnceCell<String> = OnceCell::new();
 pub(crate) static PARTS: OnceCell<usize> = OnceCell::new();
 pub(crate) static SAVE_PATH: OnceCell<String> = OnceCell::new();
+pub(crate) static FFMPEG: OnceCell<String> = OnceCell::new();
 pub(crate) const VIDEO_FORMAT: &str = "mp4";
 pub(crate) const AUDIO_FORMAT: &str = "aac";
 // todo config
@@ -19,6 +20,7 @@ struct Config {
     cookie: String,
     save_path: String,
     parts: usize,
+    ffmpeg: String,
 }
 
 impl Config {
@@ -26,6 +28,7 @@ impl Config {
         COOKIE.set(self.cookie.to_owned()).unwrap();
         SAVE_PATH.set(self.save_path.to_owned()).unwrap();
         PARTS.set(self.parts).unwrap();
+        FFMPEG.set(self.ffmpeg.to_owned()).unwrap();
     }
 }
 
@@ -42,18 +45,20 @@ pub fn use_config() {
                 cookie: String::new(),
                 save_path: helper::download_dir().to_str().unwrap().to_owned(),
                 parts: 2,
+                ffmpeg: String::from("ffmpeg"),
             };
             config.apply();
         }
     }
 }
 
-pub fn submit_config(cookie: String, save_path: String, parts: usize) {
+pub fn submit_config(cookie: String, save_path: String, parts: usize, ffmpeg: String) {
     let config_path = helper::config_path();
     let config = Config {
         cookie,
         save_path,
         parts,
+        ffmpeg,
     };
     let config_json = serde_json::to_string(&config).unwrap();
     let mut file = std::fs::OpenOptions::new()
@@ -65,21 +70,22 @@ pub fn submit_config(cookie: String, save_path: String, parts: usize) {
     file.write_all(config_json.as_bytes()).unwrap();
 }
 
-pub fn read_config() -> (String, String, usize) {
+pub fn read_config() -> (String, String, usize, String) {
     let config_path = helper::config_path();
     let file = std::fs::OpenOptions::new().read(true).open(config_path);
     match file {
         Ok(file) => {
             let config = serde_json::from_reader::<_, Config>(file).unwrap();
-            (config.cookie, config.save_path, config.parts)
+            (config.cookie, config.save_path, config.parts, config.ffmpeg)
         }
         Err(_) => {
             let config = Config {
                 cookie: String::new(),
                 save_path: helper::download_dir().to_str().unwrap().to_owned(),
                 parts: 2,
+                ffmpeg: String::from("ffmpeg"),
             };
-            (config.cookie, config.save_path, config.parts)
+            (config.cookie, config.save_path, config.parts, config.ffmpeg)
         }
     }
 }

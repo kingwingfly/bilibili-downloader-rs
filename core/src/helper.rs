@@ -1,5 +1,6 @@
 //! Helper funtions for bili_downlader
 
+use crate::config::FFMPEG;
 use tauri::api::path;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::BufWriter;
@@ -56,7 +57,7 @@ pub(crate) async fn merge(
     let out_path = std::path::PathBuf::from(out_path);
     let out_dir = out_path.parent().unwrap();
     mkdir(out_dir).await;
-    let output = Command::new("ffmpeg")
+    let output = Command::new(FFMPEG.get().unwrap())
         .arg("-y")
         .arg("-i")
         .arg(v_path)
