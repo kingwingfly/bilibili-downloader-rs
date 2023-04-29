@@ -44,7 +44,7 @@ pub fn use_config() {
             let config = Config {
                 cookie: String::new(),
                 save_path: helper::download_dir().to_str().unwrap().to_owned(),
-                parts: 2,
+                parts: 1,
                 ffmpeg: String::from("ffmpeg"),
             };
             config.apply();
@@ -82,7 +82,7 @@ pub fn read_config() -> (String, String, usize, String) {
             let config = Config {
                 cookie: String::new(),
                 save_path: helper::download_dir().to_str().unwrap().to_owned(),
-                parts: 2,
+                parts: 1,
                 ffmpeg: String::from("ffmpeg"),
             };
             (config.cookie, config.save_path, config.parts, config.ffmpeg)

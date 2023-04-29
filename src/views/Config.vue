@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 
 const cookie = ref("");
 const saveDir = ref("");
-const parts = ref<number>();
+const parts = ref();
 const ffmpeg = ref("");
 const message = ref("");
 
@@ -13,7 +13,7 @@ async function init() {
 }
 
 async function submit() {
-    await invoke("submit_config", { cookie: cookie.value, savedir: saveDir.value, parts: parts.value, ffmpeg: ffmpeg.value });
+    await invoke("submit_config", { cookie: cookie.value, savedir: saveDir.value, parts: parseInt(parts.value), ffmpeg: ffmpeg.value });
     message.value = "Configuration successful, please restart the app to apply the modification";
 }
 
