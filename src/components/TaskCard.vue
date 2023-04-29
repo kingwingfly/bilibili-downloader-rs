@@ -39,7 +39,8 @@ async function cancel() {
 
 async function re_add() {
     await invoke("cancel", { id: get_id() });
-    set_id(await invoke("add_task", { target: target }) as number);
+    set_id(await invoke("add_task", { target: target.value }) as number);
+    console.log(1);
     await refresh_state();
 }
 
