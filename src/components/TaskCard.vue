@@ -133,7 +133,7 @@ async function refresh_state() {
 
 <style scoped>
 .task.working {
-    background-color: #f1c40f;
+    background-color: #e67e22;
     list-style: none;
     border-radius: 20px;
     padding: 10px 0px 0px 0px;
@@ -201,5 +201,9 @@ async function refresh_state() {
     100% {
         opacity: 1;
     }
+}
+
+button {
+    margin: 10px 4px 10px 4px;
 }
 </style>

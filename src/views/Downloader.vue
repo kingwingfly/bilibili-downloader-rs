@@ -64,6 +64,15 @@ async function terminate() {
   background-color: #27ae60;
 }
 
+h1 {
+  margin: 20px 0px 20px 0px;
+}
+
+button,
+input {
+  margin: 10px 4px 10px 4px;
+}
+
 .btns {
   width: auto;
   height: auto;

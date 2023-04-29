@@ -1,8 +1,8 @@
 [package]
 name = "bili_downloader"
-version = "0.0.1"
+version = "0.0.2"
 description = "A Tauri App"
-authors = ["Louis<20200581@cqu.edu.cn>"]
+authors = ["Louis <20200581@cqu.edu.cn>"]
 license = ""
 default-run = "bili_downloader"
 repository = ""
