@@ -5,7 +5,7 @@ description = "A Tauri App"
 authors = ["Louis <20200581@cqu.edu.cn>"]
 license = ""
 default-run = "bili_downloader"
-repository = ""
+repository = "https://github.com/kingwingfly/bilibili-downloader-rs"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
