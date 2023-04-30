@@ -156,6 +156,7 @@ async function refresh_state() {
     list-style: none;
     border-radius: 20px;
     padding: 10px 0px 0px 0px;
+    animation: cancel-ani 1s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
 .task.cancelled {

@@ -1,7 +1,7 @@
 pub mod config;
-mod controller;
 pub mod downloader;
 mod executor;
+mod headers;
 pub mod helper;
 mod message;
 mod process;

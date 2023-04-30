@@ -10,6 +10,9 @@ mod test {
         loop {
             let process = dl.process(id);
             println!("{}", process);
+            if dl.state(0) == 3 {
+                break;
+            }
         }
     }
 

@@ -160,8 +160,9 @@ Maybe you can get cookie through your browser.
 ## Roadmap
 
 - [x] Keep config
-- [ ] Fix bug: fast switch before the real download beginning will lead range downloads out of sync
-- [ ] The real pause of resp.chunk()
+- [x] Fix bug: fast switch before the real download beginning will lead range downloads out of sync
+- [x] The real pause of resp.chunk()
+- [ ] lazily check restart
 
 See the [open issues](https://github.com/kingwingfly/bilibili-downloader-rs/issues) for a full list of proposed features (and known issues).
 

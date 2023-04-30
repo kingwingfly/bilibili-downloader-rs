@@ -2,15 +2,13 @@
 
 use reqwest::{header, Client};
 use std::cell::RefCell;
-use std::convert::TryInto;
 use std::io::SeekFrom;
 use std::sync::Arc;
 use tokio::io::{AsyncSeekExt, AsyncWriteExt};
-use tokio::sync::watch;
 use tokio::sync::Mutex;
 
 use crate::config::*;
-use crate::controller::Controller;
+use crate::headers::Headers;
 use crate::helper;
 use crate::process::Process;
 use crate::state::FSM;
@@ -24,24 +22,19 @@ pub struct Task {
     save_dir: String,
     title: Arc<Mutex<RefCell<String>>>,
     process: Arc<Process>,
-    ctl: Controller,
-    rx: watch::Receiver<bool>,
-    fsm: FSM,
+    fsm: Arc<FSM>,
 }
 
 impl Task {
     pub fn new(id: usize, target: String) -> Self {
         let process = Arc::new(Process::new());
-        let (tx, rx) = watch::channel(false);
         Self {
             id,
             target,
             save_dir: SAVE_PATH.get().unwrap().to_owned(),
             title: Arc::new(Mutex::new(RefCell::new(String::new()))),
             process,
-            ctl: Controller::new(tx),
-            rx,
-            fsm: FSM::new(),
+            fsm: Arc::new(FSM::new()),
         }
     }
 
@@ -82,7 +75,6 @@ impl Task {
         let resp = client
             .get(&self.target)
             .header(header::COOKIE, COOKIE.get().unwrap())
-            // .header(header::ACCEPT, "text/html")
             .header(header::USER_AGENT, USER_AGENT)
             .send()
             .await?;
@@ -120,13 +112,13 @@ impl Task {
                         total - 1
                     }
                 );
-                let rx = self.rx.clone();
+                // let rx = self.rx.clone();
                 handles.push(tokio::spawn(Self::download_range(
                     target.to_owned(),
                     range,
                     path.to_owned(),
                     self.process.clone(),
-                    rx,
+                    self.fsm.clone(),
                 )));
             }
         }
@@ -143,50 +135,30 @@ impl Task {
         range: String,
         path: String,
         process: Arc<Process>,
-        mut rx: watch::Receiver<bool>,
+        fsm: Arc<FSM>,
     ) -> TaskResult<bool> {
-        let headers = Self::headers(range.as_str());
-        dbg!(&headers);
         let client = Client::new();
-        let mut resp = client.get(target).headers(headers).send().await?;
+        let mut headers_gen = Headers::new(range.to_owned());
         let mut file = helper::fs_open(&path).await;
         let offset = range.split("-").next().unwrap().parse::<u64>().unwrap();
         file.seek(SeekFrom::Start(offset)).await.unwrap();
         let res = loop {
             tokio::select! {
-                                                // avoid quick switch leading pause and working exist together
-                Ok(Some(chunk)) = resp.chunk(), if !rx.has_changed().unwrap() => {
-                    let size = chunk.len();
-                    // println!("{}", size);
-                    file.write_all(&chunk).await.unwrap();
-                    process.add_finished(size);
-                }
-                // if switch or cancel, then block
-                _ = async {}, if rx.has_changed().unwrap() => {
-                    // mark as seen
-                    let state = *rx.borrow_and_update();
-                    match state {
-                        // true means should cancel
-                        true => {
-                            println!("Cancelled");
-                            // false means cancelled
-                            break false
-                        },
-                        false => {
-                            println!("Paused");
-                            // if just pause, block here
-                            rx.changed().await.unwrap();
-                            match *rx.borrow() {
-                                // when switch again, check whether cancel
-                                true => {
-                                    println!("Cancelled");
-                                    break false
-                                },
-                                false => println!("Restart"),
-                            }
-                        },
+                Some(headers) = async { headers_gen.next() }, if fsm.now_state_code() == 0 => {
+                    let mut resp = client.get(&target).headers(headers).send().await?;
+                    while let Some(chunk) = resp.chunk().await? {
+                        let size = chunk.len();
+                        file.write_all(&chunk).await.unwrap();
+                        process.add_finished(size);
                     }
-
+                }
+                _ = async {}, if fsm.now_state_code() != 0 => {
+                    let state_code = fsm.now_state_code();
+                    match state_code {
+                        2 => break false,
+                        1 => {tokio::time::sleep(tokio::time::Duration::from_secs(1)).await},
+                        _ => unreachable!(),
+                    }
                 }
                 // true if no branch match, means succeed finishing
                 else => break true
@@ -201,12 +173,10 @@ impl Task {
 
     pub fn switch(&self) {
         self.fsm.switch();
-        self.ctl.switch();
     }
 
     pub fn cancel(&self) {
-        // self.fms.cancel() execute in self.execute()
-        self.ctl.cancel();
+        self.fsm.cancel();
     }
 
     async fn get_content_length(target: &str) -> TaskResult<usize> {
@@ -221,27 +191,6 @@ impl Task {
             .unwrap()
             .to_str()?
             .parse::<usize>()?)
-    }
-
-    fn headers(range: &str) -> header::HeaderMap {
-        let headers_json = format!(
-            r#"
-    {{
-        "Sec-Fetch-Site": "cross-site",
-        "Accept-Language": "zh-CN,zh-Hans;q=0.9",
-        "Accept-Encoding": "identity",
-        "Sec-Fetch-Mode": "cors",
-        "Origin": "https://www.bilibili.com",
-        "User-Agent": "{USER_AGENT}",
-        "Referer": "https://www.bilibili.com/",
-        "Range": "bytes={range}",
-        "Sec-Fetch-Dest": "empty"
-    }}"#
-        );
-        let hm: std::collections::HashMap<String, String> =
-            serde_json::from_str(&headers_json).unwrap();
-        let headers: header::HeaderMap = (&hm).try_into().unwrap();
-        headers
     }
 
     fn rm_cache(&self) {
