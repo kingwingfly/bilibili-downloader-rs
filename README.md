@@ -11,10 +11,10 @@
 
 <div align="center"  name="readme-top">
   <a href="https://github.com/kingwingfly/bilibili-downloader-rs">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="static/app-icon.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">Tauri Bilibili Downloader</h3>
+  <h3 align="center">Bilibili Downloader</h3>
 
   <p align="center">
     A bilibili video downloader app built by Tauri, Vue and Rust!
