@@ -68,7 +68,7 @@
 
 [![Product Architecture][architecture]](https://github.com/kingwingfly/bilibili-downloader-rs/)
 
-This a Downloader for bilibili built by Tauri and Rust.
+This is a Downloader for bilibili built by Tauri and Rust.
 
 ## Important
 You need `ffmpeg` to  merge the video and audio downloaded. Official download is [here](https://ffmpeg.org/download.html).
@@ -77,7 +77,9 @@ You need `ffmpeg` to  merge the video and audio downloaded. Official download is
 
 So, for MacOS, you need use brew to install ffmpeg, or just download one and put it into `/usr/local/bin`. Then you need use `which ffmpeg` to get the detailed path of it, and paste it in the app's setting, or you can't invoke the `ffmpeg` in released tauri app. (The chat-GPT says Unix can not get `path` in release version)
 
-For Windows, download one and add it to path is enough. Recommon this [portable version](https://github.com/gniuk/cross-compile-ffmpeg-for-windows). Official version is also Ok certainly.
+Moreover, due to the apple developer is expensive, so I can not provide an arch version. But the x64 version in release page can still be used, just remember opening it by right clicking the app icon and select open for the first time. And you should also permit your Mac allowing unknown source app in the system setting. 
+
+For Windows, downloading the `ffmpeg` and addding it to path are enough. Recommend this [portable version](https://github.com/gniuk/cross-compile-ffmpeg-for-windows). Official version is also Ok certainly.
 
 You could also specify a path to `ffmpeg` as you like in settings.
 
