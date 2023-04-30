@@ -71,11 +71,15 @@
 This a Downloader for bilibili built by Tauri and Rust.
 
 ## Important
-You need `ffmpeg` to  merge the video and audio downloaded.
+You need `ffmpeg` to  merge the video and audio downloaded. Official download is [here](https://ffmpeg.org/download.html).
 
-So, for MacOs, you need use brew to install ffmpeg, or just download one and put it into `/usr/local/bin`. For Windows, download one and add it to path. 
+![ffmpeg_setting](./static/ffmpeg_setting.png).
 
-You could also specify a path to `ffmpeg` as you like in future version.
+So, for MacOS, you need use brew to install ffmpeg, or just download one and put it into `/usr/local/bin`. Then you need use `which ffmpeg` to get the detailed path of it, and paste it in the app's setting, or you can't invoke the `ffmpeg` in released tauri app. (The chat-GPT says Unix can not get `path` in release version)
+
+For Windows, download one and add it to path is enough. Recommon this [portable version](https://github.com/gniuk/cross-compile-ffmpeg-for-windows). Official version is also Ok certainly.
+
+You could also specify a path to `ffmpeg` as you like in settings.
 
 ## Advantages
 
@@ -142,7 +146,8 @@ And maybe you need this [Tauri Quick Start](https://tauri.app/v1/guides/getting-
 
 Maybe you can get cookie through your browser.
 
-<img src="static/get_cookie.png" alt="GetCookie" width="400">
+![cookie_get](./static/get_cookie.png)
+![cookie_setting](./static/cookie_setting.png)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

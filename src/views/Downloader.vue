@@ -87,7 +87,6 @@ input {
 }
 
 ul {
-  padding: 0;
   margin: 0;
   padding: 0px 15px 0px 15px;
 }
