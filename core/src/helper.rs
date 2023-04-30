@@ -39,6 +39,7 @@ pub fn download_dir() -> std::path::PathBuf {
     path::download_dir().unwrap()
 }
 
+#[allow(unused)]
 pub(crate) fn config_path() -> std::path::PathBuf {
     let mut config_path = path::config_dir().unwrap();
     config_path.push("bili_downloader");

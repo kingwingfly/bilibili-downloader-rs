@@ -16,6 +16,7 @@ pub struct Downloader {
 
 impl Downloader {
     /// Create a Downloader
+    /// And use the config
     /// # Examples
     /// ```rust
     /// use core_api::downloader::Downloader;
@@ -36,11 +37,10 @@ impl Downloader {
     /// use core_api::downloader::Downloader;
     /// let dl = Downloader::new();
     /// let target = "https://www.bilibili.com/video/BV1Ao4y1b7fj/?".to_owned();
-    /// let save_dir = "../tests/video_downloads".to_owned();
     /// /* A cache dir will be made right beside the `save_dir`,
     /// and video will be saved at `save_dir`.
     /// The cache dir will be removed after finished */
-    /// let id = dl.add_task(target, save_dir);
+    /// let id = dl.add_task(target);
     /// ```
     pub fn add_task(&self, target: String) -> usize {
         let id = self.id_next.fetch_add(1, Ordering::SeqCst);

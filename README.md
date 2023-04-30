@@ -70,7 +70,12 @@
 
 This is a Downloader for bilibili built by Tauri and Rust.
 
+<iframe src="//player.bilibili.com/player.html?aid=953038969&bvid=BV1Ts4y1w7Yd&cid=1114294158&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" height="480px"> </iframe>
+
 ## Important
+
+### ffmpeg
+
 You need `ffmpeg` to  merge the video and audio downloaded. Official download is [here](https://ffmpeg.org/download.html).
 
 ![ffmpeg_setting](./static/ffmpeg_setting.png).
@@ -79,9 +84,32 @@ So, for MacOS, you need use brew to install ffmpeg, or just download one and put
 
 Moreover, due to the apple developer is expensive, so I can not provide an arch version. But the x64 version in release page can still be used, just remember opening it by right clicking the app icon and select open for the first time. And you should also permit your Mac allowing unknown source app in the system setting. 
 
-For Windows, downloading the `ffmpeg` and addding it to path are enough. Recommend this [portable version](https://github.com/gniuk/cross-compile-ffmpeg-for-windows). Official version is also Ok certainly.
+For Windows, downloading the `ffmpeg` and adding it to path are enough. Recommend this [portable version](https://github.com/gniuk/cross-compile-ffmpeg-for-windows). Official version is also Ok certainly.
 
 You could also specify a path to `ffmpeg` as you like in settings.
+
+
+### An important new feature: Key Chain
+
+For protecting your account security, from v0.0.4 on, I'll use the system key manager to protect your bilibili cookie. This is implemented by a rust crate called `keyring`.
+
+For example, it will use `key chain` (AKA `钥匙串访问.app` in Chinese macOS system) to manage the bilibili downloader's config including cookie. That will be much safer if you don't allow other apps to visit it.
+
+![warning](./static/warning.png)
+
+Don't be worry as you can see the system having told you bili downloader only ask for one key with a name called `bili downloader` which will be created by the app itself later. Getting `Always allow` option chosen will be greatly convinient for you.
+
+What's less important, you should ensure your system has `Environment variable` named `USERNAME`. However, almost all system has it. If not, the app will just panic. Check it by `echo $USERNAME` in Linux or Unix like system or `Get-ChildItem Env: | findstr USERNAME` in powershell of Windows as you like for it's usually unnecessary.
+
+If you don't like the app and decide to uninstall it, just deleting the key named `bilibili downloader` in `key chain` in macOS is OK. Other system I'm sorry I don't known.
+
+And if the cookie is too long, it will also panic. All you need is just the `ESSADATA` line of the cookie. ([where to find cookie](#Usage))
+
+![delete key](./static/delete%20key.png)
+
+By the way, many apps like vscode or adobe save the key info through the same way.
+
+Last, I don't know how Windows protect the cookie. That's strange the system didn't ask permission when I test the app on Windows. 
 
 ## Advantages
 
@@ -162,7 +190,12 @@ Maybe you can get cookie through your browser.
 - [x] Keep config
 - [x] Fix bug: fast switch before the real download beginning will lead range downloads out of sync
 - [x] The real pause of resp.chunk()
-- [ ] lazily check restart
+- [ ] Lazily check restart
+- [ ] Performance optimize
+- [x] Encrypt cookie
+- [ ] Limit the download speed in default
+- [ ] Remind user to like, coin and collection
+- [ ] File name check
 
 See the [open issues](https://github.com/kingwingfly/bilibili-downloader-rs/issues) for a full list of proposed features (and known issues).
 

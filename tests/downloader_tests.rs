@@ -3,6 +3,14 @@ mod test {
     use core_api::downloader::Downloader;
 
     #[test]
+    fn size() {
+        println!(
+            "size of downloader is {} bytes",
+            std::mem::size_of::<Downloader>()
+        );
+    }
+
+    #[test]
     fn run_test() {
         let dl = Downloader::new();
         let target = "https://www.bilibili.com/video/BV1Ao4y1b7fj/?".to_owned();

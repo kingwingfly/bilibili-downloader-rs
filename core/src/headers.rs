@@ -1,7 +1,9 @@
+//! A header generation
+
 use crate::config::USER_AGENT;
 use reqwest::header;
 
-const MINI_SIZE: usize = 1000000;
+const MINI_SIZE: usize = 5000000;
 
 #[derive(Debug)]
 pub struct Headers {
@@ -32,6 +34,8 @@ fn headers(range: String) -> header::HeaderMap {
 }
 
 impl Headers {
+    // input a range
+    // return an iterator contains several headers
     pub fn new(range: String) -> Self {
         let mut temp = range.split('-');
         let start = temp.next().unwrap().parse::<usize>().unwrap();

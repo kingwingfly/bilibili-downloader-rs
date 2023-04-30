@@ -6,6 +6,11 @@ mod test {
     use tokio::time;
 
     #[test]
+    fn size() {
+        println!("size of task is {} bytes", std::mem::size_of::<Task>());
+    }
+
+    #[test]
     fn exe_test() {
         let rt = helper::create_rt();
         let tsk = Task::new(
