@@ -12,7 +12,7 @@ pub struct Headers {
     end: usize,
 }
 
-fn headers(range: String) -> header::HeaderMap {
+fn headers(range: &str) -> header::HeaderMap {
     let headers_json = format!(
         r#"
 {{
@@ -36,7 +36,7 @@ fn headers(range: String) -> header::HeaderMap {
 impl Headers {
     // input a range
     // return an iterator contains several headers
-    pub fn new(range: String) -> Self {
+    pub fn new(range: &str) -> Self {
         let mut temp = range.split('-');
         let start = temp.next().unwrap().parse::<usize>().unwrap();
         let end = temp.next().unwrap().parse::<usize>().unwrap();
@@ -56,7 +56,7 @@ impl Iterator for Headers {
             return None;
         }
         let range = format!("{}-{}", self.start, self.to);
-        let hm = headers(range);
+        let hm = headers(&range);
 
         self.start = self.to + 1;
         self.to = std::cmp::min(self.to + MINI_SIZE, self.end);
@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn test() {
-        let headers = Headers::new(String::from("1-8889877"));
+        let headers = Headers::new("1-8889877");
         for i in headers {
             dbg!(i);
         }

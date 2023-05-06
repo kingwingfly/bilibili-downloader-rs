@@ -138,9 +138,9 @@ impl Task {
         fsm: Arc<FSM>,
     ) -> TaskResult<bool> {
         let client = Client::new();
-        let mut headers_gen = Headers::new(range.to_owned());
+        let mut headers_gen = Headers::new(&range);
         let mut file = helper::fs_open(&path).await;
-        let offset = range.split("-").next().unwrap().parse::<u64>().unwrap();
+        let offset = range.split('-').next().unwrap().parse::<u64>().unwrap();
         file.seek(SeekFrom::Start(offset)).await.unwrap();
         let res = loop {
             tokio::select! {

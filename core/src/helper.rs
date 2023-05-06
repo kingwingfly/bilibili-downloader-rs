@@ -68,7 +68,7 @@ pub(crate) async fn merge(
         .arg("copy")
         .arg("-c:a")
         .arg("copy")
-        .arg(out_path.to_owned())
+        .arg(&out_path)
         .output()
         .await?;
 

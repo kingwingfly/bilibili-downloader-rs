@@ -8,6 +8,7 @@ const STATENUM: usize = 4;
 // siwtch cancel finish
 const TRIGGERNUM: usize = 3;
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug)]
 pub struct FSM {
     matrix: [[usize; STATENUM]; TRIGGERNUM],

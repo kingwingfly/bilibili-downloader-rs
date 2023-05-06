@@ -77,3 +77,9 @@ impl Downloader {
         self.exe.terminate();
     }
 }
+
+impl Default for Downloader {
+    fn default() -> Self {
+        Self::new()
+    }
+}

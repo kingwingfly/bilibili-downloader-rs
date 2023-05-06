@@ -244,7 +244,7 @@ Project Link: [https://github.com/kingwingfly/bilibili-downloader-rs](https://gi
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-Some document may help in develop tauri app and crawler.
+Some document may help in developing tauri app and crawler.
 
 * [Tauri Example](https://github.com/tauri-apps/tauri/tree/dev/examples)
 * [Tokio Quick Tutorial](https://tokio.rs/tokio/tutorial)
