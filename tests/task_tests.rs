@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test {
+    use core_api::config;
     use core_api::helper;
     use core_api::task::Task;
     use std::sync::Arc;
@@ -12,6 +13,7 @@ mod test {
 
     #[test]
     fn exe_test() {
+        config::use_config();
         let rt = helper::create_rt();
         let tsk = Task::new(
             0,
@@ -21,7 +23,17 @@ mod test {
     }
 
     #[test]
+    fn special_filename_test() {
+        config::use_config();
+        let target = String::from("https://www.bilibili.com/video/BV1ws4y137NX/?");
+        let rt = helper::create_rt();
+        let tsk = Task::new(0, target);
+        rt.block_on(tsk.execute()).unwrap();
+    }
+
+    #[test]
     fn switch_test() {
+        config::use_config();
         let rt = helper::create_rt();
         let task = Arc::new(Task::new(
             0,
@@ -42,6 +54,7 @@ mod test {
 
     #[test]
     fn cancel_test() {
+        config::use_config();
         let rt = helper::create_rt();
         let task = Arc::new(Task::new(
             0,
@@ -64,6 +77,7 @@ mod test {
 
     #[test]
     fn double_cancel_test() {
+        config::use_config();
         let rt = helper::create_rt();
         let task = Arc::new(Task::new(
             0,
@@ -87,6 +101,7 @@ mod test {
 
     #[test]
     fn cancel_after_finished_test() {
+        config::use_config();
         let rt = helper::create_rt();
         let task = Arc::new(Task::new(
             0,
@@ -106,6 +121,7 @@ mod test {
 
     #[test]
     fn get_process_test() {
+        config::use_config();
         let rt = helper::create_rt();
         let task = Arc::new(Task::new(
             0,

@@ -97,7 +97,7 @@ For example, it will use `key chain` (AKA `钥匙串访问.app` in Chinese macOS
 
 ![warning](./static/warning.png)
 
-Don't be worry as you can see the system having told you bili downloader only ask for one key with a name called `bili downloader` which will be created by the app itself later. Getting `Always allow` option chosen will be greatly convinient for you.
+Don't be worried as you can see the system having told you bili downloader only ask for one key with a name called `bili downloader` which will be created by the app itself later. Getting `Always allow` option chosen will be greatly convinient for you.
 
 What's less important, you should ensure your system has `Environment variable` named `USERNAME`. However, almost all system has it. If not, the app will just panic. Check it by `echo $USERNAME` in Linux or Unix like system or `Get-ChildItem Env: | findstr USERNAME` in powershell of Windows as you like for it's usually unnecessary.
 

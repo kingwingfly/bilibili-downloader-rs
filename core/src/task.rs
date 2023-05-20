@@ -87,7 +87,7 @@ impl Task {
         let a_url = match_res(res.next().unwrap());
 
         let re = regex::Regex::new(r#""videoData":\{.+?"title":"(.*?)",""#).unwrap();
-        let title = match_res(re.captures(&html).unwrap());
+        let title = helper::file_name_filter(&match_res(re.captures(&html).unwrap()));
         Ok((v_url, a_url, title))
     }
 

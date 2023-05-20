@@ -44,6 +44,7 @@ pub fn use_config() {
     match &config {
         Ok(config) => {
             let config = serde_json::from_str::<Config>(config).unwrap();
+            println!("{config:?}");
             config.apply();
         }
         Err(_) => {

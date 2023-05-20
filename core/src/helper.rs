@@ -39,15 +39,6 @@ pub fn download_dir() -> std::path::PathBuf {
     path::download_dir().unwrap()
 }
 
-#[allow(unused)]
-pub(crate) fn config_path() -> std::path::PathBuf {
-    let mut config_path = path::config_dir().unwrap();
-    config_path.push("bili_downloader");
-    std::fs::create_dir_all(&config_path).unwrap();
-    config_path.push("bili_downloader_config.json");
-    config_path
-}
-
 /// Merge video and audio using this command:
 /// `ffmpeg -y -i video.mp4 -i audio.mp4 -c:v copy -c:a copy -o output.mp4`
 pub(crate) async fn merge(
@@ -76,4 +67,23 @@ pub(crate) async fn merge(
     println!("stdout: {:?}", std::str::from_utf8(&output.stdout));
     println!("stderr: {:?}", std::str::from_utf8(&output.stderr));
     Ok(())
+}
+
+pub(crate) fn file_name_filter(file_name: &str) -> String {
+    assert!(!file_name.is_empty(), "file name is empty");
+    sanitize_filename::sanitize(file_name)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn name_filter() {
+        let name = "//:hi,你好*\\.?";
+        let name = file_name_filter(name);
+        assert_eq!(name, String::from("hi,你好."));
+        let name = file_name_filter("讨厌工作日😭//星穹铁道MMD：青雀&我的悲伤是水做的");
+        println!("{name}");
+    }
 }
