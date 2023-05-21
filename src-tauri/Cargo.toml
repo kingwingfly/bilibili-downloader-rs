@@ -1,23 +1,22 @@
 [package]
 name = "bili_downloader"
-version = "0.0.4"
+# version = "0.0.5"
+version.workspace = true
 description = "A Tauri App"
-authors = ["Louis <20200581@cqu.edu.cn>"]
-license = ""
+authors.workspace = true
+license.workspace = true
 default-run = "bili_downloader"
-repository = "https://github.com/kingwingfly/bilibili-downloader-rs"
+repository.workspace = true
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.2", features = [] }
+tauri-build = { version = "1.3", features = [] }
 
 
 [dependencies]
-tauri = { version = "1.2", features = [] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+tauri = { version = "1.3", features = [] }
 once_cell = "1.17.1"
 core-api = { path = "../core" }
 

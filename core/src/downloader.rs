@@ -4,7 +4,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
-use crate::config;
+// use crate::config;
 use crate::executor::Executor;
 use crate::task::Task;
 
@@ -23,7 +23,7 @@ impl Downloader {
     /// let dl = Downloader::new();
     /// ```
     pub fn new() -> Self {
-        config::use_config();
+        // config::use_config();
         let exe = Arc::new(Executor::new());
         Self {
             id_next: AtomicUsize::new(0),

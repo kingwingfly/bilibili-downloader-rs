@@ -1,11 +1,12 @@
 //! config
 //! Maybe some config helper functions
 
-use crate::helper;
 use keyring::Entry;
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::env;
+
+use crate::helper;
 
 pub(crate) const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15";
 pub(crate) static COOKIE: OnceCell<String> = OnceCell::new();
@@ -19,6 +20,9 @@ pub(crate) static USER: once_cell::sync::Lazy<String> =
     });
 pub(crate) const VIDEO_FORMAT: &str = "mp4";
 pub(crate) const AUDIO_FORMAT: &str = "aac";
+pub(crate) const MINI_SIZE: usize = 5_000_000; // 5MB per req
+pub(crate) static TIME_RETRY: once_cell::sync::Lazy<u64> =
+    once_cell::sync::Lazy::new(|| (MINI_SIZE * PARTS.get().unwrap() / 500_000) as u64);
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
@@ -37,6 +41,7 @@ impl Config {
     }
 }
 
+#[allow(unused)]
 pub fn use_config() {
     let config = Entry::new("bilibili downloader", &USER)
         .unwrap()
@@ -84,5 +89,6 @@ pub fn read_config() -> (String, String, usize, String) {
             ffmpeg: String::from("ffmpeg"),
         },
     };
+    config.apply();
     (config.cookie, config.save_path, config.parts, config.ffmpeg)
 }

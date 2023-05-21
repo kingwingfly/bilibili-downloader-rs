@@ -36,7 +36,9 @@ pub(crate) fn rm_cache<P: AsRef<std::path::Path>>(cache_path: P) {
 }
 
 pub fn download_dir() -> std::path::PathBuf {
-    path::download_dir().unwrap()
+    let mut path = path::download_dir().unwrap();
+    path.push("bilibili");
+    path
 }
 
 /// Merge video and audio using this command:
@@ -72,6 +74,25 @@ pub(crate) async fn merge(
 pub(crate) fn file_name_filter(file_name: &str) -> String {
     assert!(!file_name.is_empty(), "file name is empty");
     sanitize_filename::sanitize(file_name)
+}
+
+pub(crate) async fn get_resp(
+    client: &reqwest::Client,
+    target: &str,
+    headers: &reqwest::header::HeaderMap,
+) -> reqwest::Response {
+    loop {
+        match client
+            .get(target)
+            .headers(headers.clone())
+            .timeout(tokio::time::Duration::new(*crate::config::TIME_RETRY, 0))
+            .send()
+            .await
+        {
+            Ok(resp) => break resp,
+            Err(_) => tokio::time::sleep(tokio::time::Duration::new(2, 0)).await,
+        };
+    }
 }
 
 #[cfg(test)]

@@ -195,7 +195,7 @@ Maybe you can get cookie through your browser.
 - [x] Encrypt cookie
 - [ ] Limit the download speed in default
 - [ ] Remind user to like, coin and collection
-- [ ] File name check
+- [x] File name check
 
 See the [open issues](https://github.com/kingwingfly/bilibili-downloader-rs/issues) for a full list of proposed features (and known issues).
 

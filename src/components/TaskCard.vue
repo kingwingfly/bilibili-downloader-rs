@@ -54,9 +54,14 @@ async function init() {
     let before = 0;
     while (check_state()) {
         title.value = await invoke("title", { id: get_id() }) as string;
+        // c is short for current
         let c_process = await invoke("process", { id: get_id() }) as string;
         let now = parseFloat(c_process.split("Mb")[0]);
-        state.value = `Working: ${c_process}; Speed: ${(now - before).toFixed(2)} Mb/s`;
+        if ((now - before).toFixed(2) == "0.00") {
+            state.value = `Working: ${c_process}; Speed: ${(now - before).toFixed(2)} Mb/s; Retrying, don't worry.`;
+        } else {
+            state.value = `Working: ${c_process}; Speed: ${(now - before).toFixed(2)} Mb/s`;
+        }
         await new Promise(f => setTimeout(f, 1000));
         before = now;
         await refresh_state()

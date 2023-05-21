@@ -103,19 +103,18 @@ impl Task {
             self.process.add_total(total);
             let quotient = total / PARTS.get().unwrap();
             for i in 0..*PARTS.get().unwrap() {
-                let range = format!(
-                    "{}-{}",
+                let (start, end) = (
                     quotient * i,
                     if i != (PARTS.get().unwrap() - 1) {
                         quotient * (i + 1) - 1
                     } else {
                         total - 1
-                    }
+                    },
                 );
-                // let rx = self.rx.clone();
                 handles.push(tokio::spawn(Self::download_range(
                     target.to_owned(),
-                    range,
+                    start,
+                    end,
                     path.to_owned(),
                     self.process.clone(),
                     self.fsm.clone(),
@@ -132,24 +131,41 @@ impl Task {
 
     async fn download_range(
         target: String,
-        range: String,
+        start: usize,
+        end: usize,
         path: String,
         process: Arc<Process>,
         fsm: Arc<FSM>,
     ) -> TaskResult<bool> {
         let client = Client::new();
-        let mut headers_gen = Headers::new(&range);
+        let mut headers_gen = Headers::new(start, end);
         let mut file = helper::fs_open(&path).await;
-        let offset = range.split('-').next().unwrap().parse::<u64>().unwrap();
-        file.seek(SeekFrom::Start(offset)).await.unwrap();
+        let mut offset = start as u64;
+        // file.seek(SeekFrom::Start(offset)).await.unwrap();
         let res = loop {
             tokio::select! {
-                Some(headers) = async { headers_gen.next() }, if fsm.now_state_code() == 0 => {
-                    let mut resp = client.get(&target).headers(headers).send().await?;
-                    while let Some(chunk) = resp.chunk().await? {
-                        let size = chunk.len();
-                        file.write_all(&chunk).await.unwrap();
-                        process.add_finished(size);
+                Some(mut headers) = async { headers_gen.next() }, if fsm.now_state_code() == 0 => {
+                    let mut resp = helper::get_resp(&client, &target, &headers).await;
+                    loop {
+                        let gotten = resp.chunk().await;
+                        match gotten {
+                            Ok(Some(chunk)) => {
+                                let size = chunk.len();
+                                file.seek(SeekFrom::Start(offset)).await.unwrap();
+                                offset += size as u64;
+                                file.write_all(&chunk).await.unwrap();
+                                process.add_finished(size);
+                            },
+                            Ok(None) => {break;},
+                            Err(_) => {
+                                println!("retry");
+                                offset = file.seek(SeekFrom::Current(0)).await.unwrap();
+                                let end = headers.get("Range").unwrap().to_str().unwrap().split('-').last().unwrap().parse::<usize>().unwrap();
+                                headers.insert("Range", format!("bytes={offset}-{end}").parse().unwrap());
+                                resp = helper::get_resp(&client, &target, &headers).await;
+                                // println!("{headers:?}:{}\n", resp.status())
+                            }
+                        }
                     }
                 }
                 _ = async {}, if fsm.now_state_code() != 0 => {
@@ -165,8 +181,8 @@ impl Task {
             }
         };
         match res {
-            true => println!("finished range {}", range),
-            false => println!("cancelled range {}", range),
+            true => println!("finished range {start}-{end}"),
+            false => println!("cancelled range {start}-{end}"),
         }
         Ok(res)
     }
