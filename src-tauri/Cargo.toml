@@ -1,6 +1,5 @@
 [package]
 name = "bili_downloader"
-# version = "0.0.5"
 version.workspace = true
 description = "A Tauri App"
 authors.workspace = true

@@ -1,6 +1,5 @@
 [package]
 name = "core-api"
-# version = "0.0.5"
 version.workspace = true
 edition = "2021"
 
