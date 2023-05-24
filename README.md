@@ -196,7 +196,7 @@ Maybe you can get cookie through your browser.
 - [ ] Limit the download speed in default
 - [ ] Remind user to like, coin and collection
 - [x] File name check
-- [ ] Use JoinSet replace jhs
+- [x] Use JoinSet replace jhs
 
 See the [open issues](https://github.com/kingwingfly/bilibili-downloader-rs/issues) for a full list of proposed features (and known issues).
 

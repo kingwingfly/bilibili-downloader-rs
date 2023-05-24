@@ -6,6 +6,7 @@ use std::io::SeekFrom;
 use std::sync::Arc;
 use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 use tokio::sync::Mutex;
+use tokio::task::JoinSet;
 
 use crate::config::*;
 use crate::headers::Headers;
@@ -97,7 +98,7 @@ impl Task {
     /// `target`: A direct download url
     /// `path`: Ends with `VIDEO/AUDIO_FORMAT'
     async fn download(&self, target_path: Vec<(String, String)>) -> TaskResult<bool> {
-        let mut handles = Vec::new();
+        let mut handles = JoinSet::new();
         for (target, path) in target_path {
             let total = Self::get_content_length(target.as_str()).await?;
             self.process.add_total(total);
@@ -111,23 +112,25 @@ impl Task {
                         total - 1
                     },
                 );
-                handles.push(tokio::spawn(Self::download_range(
+                handles.spawn(Self::download_range(
                     target.to_owned(),
                     start,
                     end,
                     path.to_owned(),
                     self.process.clone(),
                     self.fsm.clone(),
-                )));
+                ));
             }
         }
-        // avoid return false too fast, rm the cache dir, lead to panic
         let mut res = true;
-        for handle in handles {
-            res &= handle.await??;
+        for _ in 0..handles.len() {
+            res &= handles.join_next().await.unwrap()??;
+            if !res {
+                break;
+            }
         }
         Ok(res)
-    }
+    } // JoinHandles are dropped with JoinSet here
 
     async fn download_range(
         target: String,
