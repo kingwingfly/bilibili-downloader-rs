@@ -3,7 +3,6 @@
 use crate::config::FFMPEG;
 use tauri::api::path;
 use tokio::fs::{self, OpenOptions};
-use tokio::io::BufWriter;
 use tokio::process::Command;
 
 /// As the name, create a tokio runtime at current thread.
@@ -15,14 +14,14 @@ pub fn create_rt() -> tokio::runtime::Runtime {
 }
 
 /// Retuen a BufWriter, create new, overwrite but **no** truncate
-pub async fn fs_open(path: &str) -> BufWriter<tokio::fs::File> {
+pub async fn fs_open(path: &str) -> tokio::sync::RwLock<tokio::io::BufWriter<tokio::fs::File>> {
     let file = OpenOptions::new()
         .create(true)
         .write(true)
         .open(path)
         .await
         .unwrap();
-    BufWriter::new(file)
+    tokio::sync::RwLock::new(tokio::io::BufWriter::new(file))
 }
 
 /// Create folders recursively

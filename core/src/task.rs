@@ -9,7 +9,7 @@ use tokio::sync::Mutex;
 use tokio::task::JoinSet;
 
 use crate::config::*;
-use crate::headers::Headers;
+use crate::headers::HeadersGen;
 use crate::helper;
 use crate::process::Process;
 use crate::state::FSM;
@@ -102,21 +102,15 @@ impl Task {
         for (target, path) in target_path {
             let total = Self::get_content_length(target.as_str()).await?;
             self.process.add_total(total);
-            let quotient = total / PARTS.get().unwrap();
-            for i in 0..*PARTS.get().unwrap() {
-                let (start, end) = (
-                    quotient * i,
-                    if i != (PARTS.get().unwrap() - 1) {
-                        quotient * (i + 1) - 1
-                    } else {
-                        total - 1
-                    },
-                );
+            let headers_gen = Arc::new(HeadersGen::new(0, total));
+            let file = Arc::new(helper::fs_open(&path).await);
+            for _ in 0..*PARTS.get().unwrap() {
+                let headers_gen_c = headers_gen.clone();
+                let file_c = file.clone();
                 handles.spawn(Self::download_range(
+                    file_c,
                     target.to_owned(),
-                    start,
-                    end,
-                    path.to_owned(),
+                    headers_gen_c,
                     self.process.clone(),
                     self.fsm.clone(),
                 ));
@@ -133,29 +127,25 @@ impl Task {
     } // JoinHandles are dropped with JoinSet here
 
     async fn download_range(
+        file: Arc<tokio::sync::RwLock<tokio::io::BufWriter<tokio::fs::File>>>,
         target: String,
-        start: usize,
-        end: usize,
-        path: String,
+        headers_gen: Arc<HeadersGen>,
         process: Arc<Process>,
         fsm: Arc<FSM>,
     ) -> TaskResult<bool> {
         let client = Client::new();
-        let mut headers_gen = Headers::new(start, end);
-        let mut file = helper::fs_open(&path).await;
-        let mut offset = start as u64;
-        // file.seek(SeekFrom::Start(offset)).await.unwrap();
         let res = loop {
             tokio::select! {
                 Some(mut headers) = async { headers_gen.next() }, if fsm.now_state_code() == 0 => {
+                    let mut offset = headers.get("Range").unwrap().to_str().unwrap().split('-').next().unwrap().split('=').last().unwrap().parse::<u64>().unwrap();
+                    let mut file = file.write().await;
                     let mut resp = helper::get_resp(&client, &target, &headers).await;
+                    file.seek(SeekFrom::Start(offset)).await.unwrap();
                     loop {
                         let gotten = resp.chunk().await;
                         match gotten {
                             Ok(Some(chunk)) => {
                                 let size = chunk.len();
-                                file.seek(SeekFrom::Start(offset)).await.unwrap();
-                                offset += size as u64;
                                 file.write_all(&chunk).await.unwrap();
                                 process.add_finished(size);
                             },
@@ -163,8 +153,8 @@ impl Task {
                             Err(_) => {
                                 println!("retry");
                                 offset = file.seek(SeekFrom::Current(0)).await.unwrap();
-                                let end = headers.get("Range").unwrap().to_str().unwrap().split('-').last().unwrap().parse::<usize>().unwrap();
-                                headers.insert("Range", format!("bytes={offset}-{end}").parse().unwrap());
+                                let to = headers.get("Range").unwrap().to_str().unwrap().split('-').last().unwrap().parse::<usize>().unwrap();
+                                headers.insert("Range", format!("bytes={offset}-{to}").parse().unwrap());
                                 resp = helper::get_resp(&client, &target, &headers).await;
                                 // println!("{headers:?}:{}\n", resp.status())
                             }
@@ -183,10 +173,6 @@ impl Task {
                 else => break true
             }
         };
-        match res {
-            true => println!("finished range {start}-{end}"),
-            false => println!("cancelled range {start}-{end}"),
-        }
         Ok(res)
     }
 
