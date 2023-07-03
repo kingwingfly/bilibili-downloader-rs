@@ -185,17 +185,26 @@ impl Task {
     }
 
     async fn get_content_length(target: &str) -> TaskResult<usize> {
-        Ok(Client::new()
-            .head(target)
+        let resp = Client::new()
+            .get(target)
             .header(header::USER_AGENT, USER_AGENT)
             .header(header::REFERER, "https://www.bilibili.com/")
+            .header(header::RANGE, "bytes=0-0")
             .send()
-            .await?
-            .headers()
-            .get("content-length")
+            .await?;
+        let hd = resp.headers();
+        dbg!(&hd);
+        let length = hd
+            .get("content-range")
+            .unwrap_or(&header::HeaderValue::from_str(&format!("/{}", usize::MAX)).unwrap())
+            .to_str()
             .unwrap()
-            .to_str()?
-            .parse::<usize>()?)
+            .split('/')
+            .last()
+            .unwrap()
+            .parse::<usize>()
+            .unwrap();
+        Ok(length)
     }
 
     fn rm_cache(&self) {
@@ -215,5 +224,24 @@ impl Task {
 
     pub fn state(&self) -> usize {
         self.fsm.now_state_code()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_get_content_length() {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        rt.block_on(async {
+            let target = String::from("https://xy139x226x24x92xy.mcdn.bilivideo.cn:8082/v1/resource/1181828689-1-100110.m4s?agrr=0&build=0&buvid=&bvc=vod&bw=29918&cdnid=71704&deadline=1688362382&e=ig8euxZM2rNcNbdlhoNvNC8BqJIzNbfqXBvEqxTEto8BTrNvN0GvT90W5JZMkX_YN0MvXg8gNEV4NC8xNEV4N03eN0B5tZlqNxTEto8BTrNvNeZVuJ10Kj_g2UB02J0mN0B5tZlqNCNEto8BTrNvNC7MTX502C8f2jmMQJ6mqF2fka1mqx6gqj0eN0B599M%3D&gen=playurlv2&logo=80000000&mid=0&nbs=1&nettype=0&oi=2073295812&orderid=0%2C3&os=bcache&platform=pc&sign=de24e3&traceid=trosoULGtgptRC_0_e_N&uipk=5&uparams=e%2Cuipk%2Cnbs%2Cdeadline%2Cgen%2Cos%2Coi%2Ctrid%2Cmid%2Cplatform&upsig=2adf885b104fbd37e096b22dccb491c0");
+            // let target = String::from("https://cn-jstz-cu-01-04.bilivideo.com/upgcxcode/89/86/1181828689/1181828689_nb3-1-30080.m4s?e=ig8euxZM2rNcNbdlhoNvNC8BqJIzNbfqXBvEqxTEto8BTrNvN0GvT90W5JZMkX_YN0MvXg8gNEV4NC8xNEV4N03eN0B5tZlqNxTEto8BTrNvNeZVuJ10Kj_g2UB02J0mN0B5tZlqNCNEto8BTrNvNC7MTX502C8f2jmMQJ6mqF2fka1mqx6gqj0eN0B599M=&uipk=5&nbs=1&deadline=1688360215&gen=playurlv2&os=bcache&oi=2073295812&trid=0000f176f753d0d145fcb3955155bed6c30eu&mid=32280488&platform=pc&upsig=ed7ade91c9210ac3fef1f0683b1123fe&uparams=e,uipk,nbs,deadline,gen,os,oi,trid,mid,platform&cdnid=71704&bvc=vod&nettype=0&orderid=0,3&buvid=1FF87ED7-2D57-84BE-3FD0-8F03EC5B47F949754infoc&build=0&agrr=0&bw=124636&logo=80000000");
+            let length = Task::get_content_length(&target).await.unwrap();
+            dbg!(length);
+        })
     }
 }

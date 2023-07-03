@@ -15,16 +15,13 @@ fn headers(range: &str) -> header::HeaderMap {
     let headers_json = format!(
         r#"
 {{
-    "Sec-Fetch-Site": "cross-site",
-    "Accept-Language": "zh-CN,zh-Hans;q=0.9",
-    "Accept-Encoding": "identity",
-    "Sec-Fetch-Mode": "cors",
-    "Origin": "https://www.bilibili.com",
-    "User-Agent": "{USER_AGENT}",
-    "Referer": "https://www.bilibili.com/",
-    "Range": "bytes={range}",
-    "Sec-Fetch-Dest": "empty"
-}}"#
+    "{}": "{USER_AGENT}",
+    "{}": "https://www.bilibili.com/",
+    "{}": "bytes={range}"
+}}"#,
+        header::USER_AGENT,
+        header::REFERER,
+        header::RANGE
     );
     let hm: std::collections::HashMap<String, String> =
         serde_json::from_str(&headers_json).unwrap();

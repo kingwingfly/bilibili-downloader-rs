@@ -2,7 +2,7 @@
 members = ["src-tauri", "core"]
 
 [workspace.package]
-version = "0.0.6"
+version = "0.0.7"
 repository = "https://github.com/kingwingfly/bilibili-downloader-rs"
 authors = ["Louis <20200581@cqu.edu.cn>"]
 license = ""
