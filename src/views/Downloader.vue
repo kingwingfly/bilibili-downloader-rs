@@ -19,6 +19,7 @@ async function addTask() {
     target: target.value,
     state: 0
   });
+  target.value = "";
 }
 
 async function switchAll() {
